@@ -3,15 +3,16 @@
  *
  * Esta tela permite criar um novo serviço, como se estivéssemos compondo
  * "Paranoid" do Black Sabbath: vários riffs (campos) se combinam para
- * construir algo poderoso. O formulário captura cliente, telefone,
- * equipamento, descrição do problema, peças usadas e valor da mão de obra.
- * Ao salvar, adicionamos o serviço à lista com status "aguardando".
+ * construir algo poderoso. Na 0.1.2 o formulário ficou mais limpo e mais
+ * confortável para o uso diário.
  */
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useServices } from '../context/ServicesContext';
 import { useNavigation } from '@react-navigation/native';
+import { colors } from '../constants/theme';
+import { formatPhone, normalizePhone } from '../utils/formatters';
 
 export default function NewServiceScreen() {
   const { addService } = useServices();
@@ -38,40 +39,40 @@ export default function NewServiceScreen() {
   }
 
   function handleSubmit() {
-    // Validação
     if (!cliente.trim() || !equipamento.trim()) {
       Alert.alert('Campos obrigatórios', 'Preencha o nome do cliente e o equipamento.');
       return;
     }
-    // Validação de peças: todas precisam ter descrição e valor numérico
+
     for (const peca of pecas) {
       if (!peca.descricao.trim()) {
         Alert.alert('Peça inválida', 'Todas as peças devem ter uma descrição.');
         return;
       }
       const valorNum = parseFloat(peca.valor);
-      if (isNaN(valorNum) || valorNum < 0) {
+      if (Number.isNaN(valorNum) || valorNum < 0) {
         Alert.alert('Peça inválida', `Valor inválido para a peça "${peca.descricao}".`);
         return;
       }
     }
-    // Validação do valor da mão de obra
+
     const maoNum = parseFloat(maoDeObra);
-    if (maoDeObra && (isNaN(maoNum) || maoNum < 0)) {
+    if (maoDeObra && (Number.isNaN(maoNum) || maoNum < 0)) {
       Alert.alert('Valor inválido', 'O valor da mão de obra deve ser um número não negativo.');
       return;
     }
 
     addService({
       cliente: cliente.trim(),
-      telefone: telefone.trim(),
+      telefone: normalizePhone(telefone),
       equipamento: equipamento.trim(),
       problema: problema.trim(),
       pecas: pecas.map((p) => ({ descricao: p.descricao.trim(), valor: parseFloat(p.valor) || 0 })),
       maoDeObra: parseFloat(maoDeObra) || 0,
     });
+
+    Alert.alert('Serviço salvo', 'O novo serviço entrou no fluxo do Nexo.');
     navigation.navigate('Home');
-    // Resetar formulário
     setCliente('');
     setTelefone('');
     setEquipamento('');
@@ -82,52 +83,62 @@ export default function NewServiceScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Cadastrar novo serviço</Text>
+      <Text style={styles.title}>Novo serviço</Text>
+      <Text style={styles.subtitle}>Registre o essencial e deixe o resto seguir no compasso do app.</Text>
+
       <TextInput
         placeholder="Cliente"
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
         value={cliente}
         onChangeText={setCliente}
       />
       <TextInput
         placeholder="Telefone"
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
         value={telefone}
-        onChangeText={setTelefone}
+        onChangeText={(value) => setTelefone(formatPhone(value))}
         keyboardType="phone-pad"
       />
       <TextInput
         placeholder="Equipamento"
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
         value={equipamento}
         onChangeText={setEquipamento}
       />
       <TextInput
         placeholder="Descrição do problema"
-        style={[styles.input, { height: 80 }]}
+        placeholderTextColor={colors.textMuted}
+        style={[styles.input, styles.inputMultiline]}
         value={problema}
         onChangeText={setProblema}
         multiline
       />
+
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Peças utilizadas</Text>
         <TouchableOpacity onPress={handleAddPeca} style={styles.addButton}>
           <Text style={styles.addButtonText}>Adicionar peça</Text>
         </TouchableOpacity>
       </View>
+
       {pecas.map((peca, index) => (
         <View key={index} style={styles.pecaContainer}>
           <TextInput
             placeholder="Descrição"
-            style={[styles.input, { flex: 1, marginRight: 8 }]}
+            placeholderTextColor={colors.textMuted}
+            style={[styles.input, styles.pieceDescription]}
             value={peca.descricao}
             onChangeText={(value) => handlePecaChange(index, 'descricao', value)}
           />
           <TextInput
             placeholder="Valor"
-            style={[styles.input, { width: 80, marginRight: 8 }]}
+            placeholderTextColor={colors.textMuted}
+            style={[styles.input, styles.pieceValue]}
             value={peca.valor.toString()}
-            onChangeText={(value) => handlePecaChange(index, 'valor', value)}
+            onChangeText={(value) => handlePecaChange(index, 'valor', value.replace(',', '.'))}
             keyboardType="numeric"
           />
           <TouchableOpacity onPress={() => handleRemovePeca(index)} style={styles.removeButton}>
@@ -135,14 +146,19 @@ export default function NewServiceScreen() {
           </TouchableOpacity>
         </View>
       ))}
+
       <TextInput
         placeholder="Valor da mão de obra"
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
         value={maoDeObra.toString()}
-        onChangeText={setMaoDeObra}
+        onChangeText={(value) => setMaoDeObra(value.replace(',', '.'))}
         keyboardType="numeric"
       />
-      <Button title="Salvar serviço" onPress={handleSubmit} />
+
+      <Pressable style={styles.submitButton} onPress={handleSubmit}>
+        <Text style={styles.submitButtonText}>Salvar serviço</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -150,54 +166,92 @@ export default function NewServiceScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.white,
+    marginBottom: 6,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    marginBottom: 18,
+    lineHeight: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    color: colors.white,
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 12,
     fontSize: 16,
+  },
+  inputMultiline: {
+    height: 96,
+    textAlignVertical: 'top',
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    marginTop: 4,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: colors.white,
   },
   addButton: {
-    backgroundColor: '#0066cc',
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '700',
   },
   pecaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
+  pieceDescription: {
+    flex: 1,
+    marginRight: 8,
+    marginBottom: 0,
+  },
+  pieceValue: {
+    width: 96,
+    marginRight: 8,
+    marginBottom: 0,
+  },
   removeButton: {
-    backgroundColor: '#cc0000',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 4,
+    backgroundColor: colors.danger,
+    paddingHorizontal: 11,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
   removeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: colors.white,
+    fontWeight: '800',
+  },
+  submitButton: {
+    backgroundColor: colors.success,
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  submitButtonText: {
+    color: colors.white,
+    fontWeight: '800',
+    fontSize: 15,
   },
 });

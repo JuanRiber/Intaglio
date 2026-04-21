@@ -2,37 +2,37 @@
  * ServiceDetailScreen.js
  *
  * Nesta tela mergulhamos nos detalhes de um serviço, como as letras
- * introspectivas de Nietzsche e Jung. Permitimos alterar o status e
- * visualizar o orçamento com peças e mão de obra. Também oferecemos um atalho
- * para falar com o cliente via WhatsApp – abrindo portas como The Doors.
+ * introspectivas de Nietzsche e Jung. Permitimos alterar o status, editar,
+ * excluir e visualizar o orçamento de forma mais clara.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useServices, ServiceStatus } from '../context/ServicesContext';
+import { colors } from '../constants/theme';
+import { formatCurrency, formatPhone, getServiceTotal, statusLabel } from '../utils/formatters';
 
 export default function ServiceDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { serviceId } = route.params || {};
-  const { services, updateStatus } = useServices();
+  const { services, updateStatus, deleteService } = useServices();
 
   const service = services.find((svc) => svc.id === serviceId);
   if (!service) {
     return (
-      <View style={styles.container}>
-        <Text>Serviço não encontrado.</Text>
+      <View style={styles.centeredContainer}>
+        <Text style={styles.notFoundText}>Serviço não encontrado.</Text>
       </View>
     );
   }
 
   const { cliente, telefone, equipamento, problema, pecas, maoDeObra, status, paidAt } = service;
-
   const totalPecas = Array.isArray(pecas)
-    ? pecas.reduce((sum, p) => sum + parseFloat(p.valor || 0), 0)
+    ? pecas.reduce((sum, p) => sum + Number(p.valor || 0), 0)
     : 0;
-  const total = totalPecas + parseFloat(maoDeObra || 0);
+  const total = getServiceTotal(service);
 
   const statusOptions = [
     { value: ServiceStatus.AGUARDANDO, label: 'Aguardando' },
@@ -51,185 +51,314 @@ export default function ServiceDetailScreen() {
       Alert.alert('Telefone não informado');
       return;
     }
-    const msg = encodeURIComponent(
-      `Olá ${cliente}, aqui está o orçamento para o serviço do seu ${equipamento}:\nValor total: R$ ${total.toFixed(2)}.\nStatus atual: ${status}.` +
-        '\n\nEnviado via Nexo – inspirado em Led Zeppelin, Black Sabbath e The Doors.'
+
+    const message = encodeURIComponent(
+      [
+        `Olá ${cliente}, segue o resumo do seu serviço no Nexo.`,
+        `Equipamento: ${equipamento}`,
+        `Status: ${statusLabel(status)}`,
+        `Peças: ${formatCurrency(totalPecas)}`,
+        `Mão de obra: ${formatCurrency(maoDeObra)}`,
+        `Total: ${formatCurrency(total)}`,
+      ].join('\n')
     );
-    const url = `https://wa.me/${telefone.replace(/\D/g, '')}?text=${msg}`;
+
+    const url = `https://wa.me/${telefone.replace(/\D/g, '')}?text=${message}`;
     Linking.openURL(url).catch(() => Alert.alert('Não foi possível abrir o WhatsApp.'));
+  }
+
+  function handleDelete() {
+    Alert.alert(
+      'Excluir serviço',
+      'Essa ação remove o serviço do app. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            deleteService(service.id);
+            navigation.navigate('Home');
+          },
+        },
+      ]
+    );
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Detalhes do serviço</Text>
-      <Text style={styles.label}>Cliente:</Text>
-      <Text style={styles.value}>{cliente}</Text>
-      {telefone ? (
-        <>
-          <Text style={styles.label}>Telefone:</Text>
-          <Text style={styles.value}>{telefone}</Text>
-        </>
-      ) : null}
-      <Text style={styles.label}>Equipamento:</Text>
-      <Text style={styles.value}>{equipamento}</Text>
-      {problema ? (
-        <>
-          <Text style={styles.label}>Problema:</Text>
-          <Text style={styles.value}>{problema}</Text>
-        </>
-      ) : null}
-      <Text style={styles.sectionTitle}>Peças</Text>
-      {Array.isArray(pecas) && pecas.length > 0 ? (
-        pecas.map((p, idx) => (
-          <View key={idx} style={styles.itemRow}>
-            <Text style={styles.itemText}>{p.descricao}</Text>
-            <Text style={styles.itemText}>R$ {parseFloat(p.valor).toFixed(2)}</Text>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.value}>Nenhuma peça registrada.</Text>
-      )}
-      <View style={styles.itemRow}>
-        <Text style={[styles.itemText, { fontWeight: 'bold' }]}>Mão de obra</Text>
-        <Text style={[styles.itemText, { fontWeight: 'bold' }]}>R$ {parseFloat(maoDeObra || 0).toFixed(2)}</Text>
+      <View style={styles.heroCard}>
+        <Text style={styles.heroTitle}>{cliente}</Text>
+        <Text style={styles.heroSubtitle}>{equipamento}</Text>
+        <View style={styles.heroBadge}>
+          <Text style={styles.heroBadgeText}>{statusLabel(status)}</Text>
+        </View>
       </View>
-      <View style={styles.itemRow}>
-        <Text style={[styles.itemText, { fontWeight: 'bold' }]}>Total</Text>
-        <Text style={[styles.itemText, { fontWeight: 'bold' }]}>R$ {total.toFixed(2)}</Text>
-      </View>
-      <Text style={styles.sectionTitle}>Status</Text>
-      <View style={styles.statusContainer}>
-        {statusOptions.map((opt) => (
-          <TouchableOpacity
-            key={opt.value}
-            onPress={() => handleStatusChange(opt.value)}
-            style={[
-              styles.statusButton,
-              status === opt.value && styles.statusButtonActive,
-            ]}
-          >
-            <Text style={[styles.statusButtonText, status === opt.value && styles.statusButtonTextActive]}>
-              {opt.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      {status !== ServiceStatus.PAGO ? (
-        <TouchableOpacity onPress={() => handleStatusChange(ServiceStatus.PAGO)} style={styles.payButton}>
-          <Text style={styles.payButtonText}>Marcar como pago</Text>
-        </TouchableOpacity>
-      ) : (
-        <Text style={styles.paidAt}>Pago em {paidAt ? new Date(paidAt).toLocaleDateString() : 'data indefinida'}</Text>
-      )}
 
-      {/* Botão para editar o serviço */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Informações</Text>
+        <InfoRow label="Cliente" value={cliente} />
+        <InfoRow label="Telefone" value={telefone ? formatPhone(telefone) : 'Não informado'} />
+        <InfoRow label="Equipamento" value={equipamento} />
+        <InfoRow label="Problema" value={problema || 'Sem descrição registrada.'} multiline />
+      </View>
+
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Orçamento</Text>
+        {Array.isArray(pecas) && pecas.length > 0 ? (
+          pecas.map((piece, idx) => (
+            <View key={idx} style={styles.itemRow}>
+              <Text style={styles.itemText}>{piece.descricao}</Text>
+              <Text style={styles.itemValue}>{formatCurrency(piece.valor)}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyPieces}>Nenhuma peça registrada.</Text>
+        )}
+
+        <View style={[styles.itemRow, styles.summaryRow]}>
+          <Text style={styles.summaryLabel}>Subtotal peças</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(totalPecas)}</Text>
+        </View>
+        <View style={styles.itemRow}>
+          <Text style={styles.summaryLabel}>Mão de obra</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(maoDeObra)}</Text>
+        </View>
+        <View style={[styles.itemRow, styles.totalRow]}>
+          <Text style={styles.totalLabel}>Total final</Text>
+          <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+        </View>
+      </View>
+
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Fluxo do serviço</Text>
+        <View style={styles.statusContainer}>
+          {statusOptions.map((option) => {
+            const isActive = status === option.value;
+            return (
+              <TouchableOpacity
+                key={option.value}
+                onPress={() => handleStatusChange(option.value)}
+                style={[styles.statusButton, isActive && styles.statusButtonActive]}
+              >
+                <Text style={[styles.statusButtonText, isActive && styles.statusButtonTextActive]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {status === ServiceStatus.PAGO && (
+          <Text style={styles.paidAt}>Pago em {paidAt ? new Date(paidAt).toLocaleDateString('pt-BR') : 'data indefinida'}</Text>
+        )}
+      </View>
+
       <TouchableOpacity
         onPress={() => navigation.navigate('Editar Serviço', { serviceId: service.id })}
-        style={styles.editButton}
+        style={styles.primaryButton}
       >
-        <Text style={styles.editButtonText}>Editar serviço</Text>
+        <Text style={styles.primaryButtonText}>Editar serviço</Text>
       </TouchableOpacity>
+
       <TouchableOpacity onPress={handleWhatsApp} style={styles.whatsButton}>
-        <Text style={styles.whatsButtonText}>Enviar orçamento via WhatsApp</Text>
+        <Text style={styles.buttonText}>Enviar orçamento via WhatsApp</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+        <Text style={styles.buttonText}>Excluir serviço</Text>
       </TouchableOpacity>
     </ScrollView>
+  );
+}
+
+function InfoRow({ label, value, multiline = false }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={[styles.infoValue, multiline && styles.infoValueMultiline]}>{value}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  centeredContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 8,
+  notFoundText: {
+    color: colors.white,
   },
-  value: {
-    fontSize: 16,
-    color: '#333',
+  heroCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  heroTitle: {
+    color: colors.white,
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    color: colors.textMuted,
+    marginBottom: 10,
+  },
+  heroBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  heroBadgeText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sectionCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 14,
   },
   sectionTitle: {
+    color: colors.white,
     fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
+  infoRow: {
+    marginBottom: 10,
+  },
+  infoLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  infoValue: {
+    color: colors.white,
+    fontSize: 15,
+  },
+  infoValueMultiline: {
+    lineHeight: 21,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   itemText: {
+    color: colors.white,
+    flex: 1,
+    paddingRight: 12,
+  },
+  itemValue: {
+    color: colors.textMuted,
+  },
+  emptyPieces: {
+    color: colors.textMuted,
+    marginBottom: 12,
+  },
+  summaryRow: {
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  summaryLabel: {
+    color: colors.textMuted,
     fontSize: 14,
-    color: '#333',
+  },
+  summaryValue: {
+    color: colors.white,
+    fontWeight: '700',
+  },
+  totalRow: {
+    marginBottom: 0,
+    marginTop: 2,
+  },
+  totalLabel: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  totalValue: {
+    color: colors.success,
+    fontSize: 18,
+    fontWeight: '800',
   },
   statusContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginVertical: 8,
+    marginBottom: 6,
   },
   statusButton: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
+    paddingVertical: 8,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#0066cc',
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSoft,
     marginRight: 8,
     marginBottom: 8,
   },
   statusButtonActive: {
-    backgroundColor: '#0066cc',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   statusButtonText: {
-    color: '#0066cc',
+    color: colors.textMuted,
     fontSize: 12,
+    fontWeight: '700',
   },
   statusButtonTextActive: {
-    color: '#fff',
-  },
-  payButton: {
-    backgroundColor: '#28a745',
-    padding: 12,
-    borderRadius: 4,
-    marginVertical: 8,
-  },
-  payButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
+    color: colors.white,
   },
   paidAt: {
-    fontSize: 14,
-    color: '#28a745',
-    marginVertical: 8,
+    color: colors.success,
+    marginTop: 6,
+  },
+  primaryButton: {
+    backgroundColor: colors.primary,
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 10,
+    alignItems: 'center',
   },
   whatsButton: {
     backgroundColor: '#25D366',
-    padding: 12,
-    borderRadius: 4,
-    marginVertical: 8,
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 10,
+    alignItems: 'center',
   },
-  whatsButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  deleteButton: {
+    backgroundColor: colors.danger,
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 18,
+    alignItems: 'center',
   },
-  editButton: {
-    backgroundColor: '#007bff',
-    padding: 12,
-    borderRadius: 4,
-    marginVertical: 8,
+  primaryButtonText: {
+    color: colors.white,
+    fontWeight: '800',
   },
-  editButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  buttonText: {
+    color: colors.white,
+    fontWeight: '800',
   },
 });

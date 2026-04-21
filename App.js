@@ -3,14 +3,11 @@
  *
  * Pensa neste arquivo como o riff inicial de "Whole Lotta Love" do Led Zeppelin: ele
  * estabelece o tom do nosso aplicativo Nexo. Aqui definimos a estrutura de
- * navegação e envolvemos tudo em um contexto que gerencia os serviços. A
- * inspiração rock não está apenas nas músicas que amamos, mas na forma como
- * organizamos o código: cada componente tem seu papel, como instrumentos em
- * uma banda.
+ * navegação e envolvemos tudo em um contexto que gerencia os serviços.
  */
 
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,18 +16,35 @@ import NewServiceScreen from './src/screens/NewServiceScreen';
 import ServiceDetailScreen from './src/screens/ServiceDetailScreen';
 import EditServiceScreen from './src/screens/EditServiceScreen';
 import { ServicesProvider } from './src/context/ServicesContext';
+import { colors } from './src/constants/theme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Componente do menu inferior. Aqui cada aba é como uma música em um álbum: tem
-// sua própria vibe, mas todas se complementam. Usamos ícones simples do Ionicons
-// para representar cada seção.
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: colors.background,
+    card: colors.surface,
+    text: colors.white,
+    border: colors.border,
+    primary: colors.primary,
+  },
+};
+
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
+        },
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'Home') {
@@ -40,8 +54,8 @@ function MainTabs() {
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#0066cc',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -53,8 +67,15 @@ function MainTabs() {
 export default function App() {
   return (
     <ServicesProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.surface },
+            headerTintColor: colors.white,
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
           <Stack.Screen
             name="Main"
             component={MainTabs}

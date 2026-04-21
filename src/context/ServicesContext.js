@@ -61,6 +61,12 @@ function servicesReducer(state, action) {
       // Substitui a lista existente por aquela recuperada do armazenamento.
       return { ...state, services: action.payload || [] };
     }
+    case 'DELETE_SERVICE': {
+      return {
+        ...state,
+        services: state.services.filter((svc) => svc.id !== action.payload),
+      };
+    }
     default:
       return state;
   }
@@ -129,6 +135,13 @@ export function ServicesProvider({ children }) {
     });
   }
 
+  function deleteService(id) {
+    dispatch({
+      type: 'DELETE_SERVICE',
+      payload: id,
+    });
+  }
+
   // Calcula o faturamento do mês atual somando os serviços pagos.
   function getMonthlyRevenue() {
     const now = new Date();
@@ -147,6 +160,7 @@ export function ServicesProvider({ children }) {
         addService,
         updateStatus,
         editService,
+        deleteService,
         getMonthlyRevenue,
       }}
     >
