@@ -8,6 +8,13 @@ Inspirado nos riffs de **Led Zeppelin**, na intensidade do **Black Sabbath** e n
 
 ## Funcionalidades
 
+### Fluxo de acesso (0.1.3)
+
+- **Splash screen:** abertura com marca Nexo em fundo escuro e micro animação.
+- **Onboarding curto:** apresenta em 3 passos o valor do app: organizar serviços, enviar orçamentos e acompanhar faturamento.
+- **Autenticação local:** login, criar conta e recuperação de senha simulada com persistência local.
+
+
 - **Cadastro de serviços:** Informe cliente, telefone, equipamento, descrição do problema, peças utilizadas e valor de mão de obra. Cada serviço é salvo com status inicial "aguardando".
 - **Acompanhamento de status:** Atualize as etapas do serviço (aguardando, em serviço, pronto, entregue ou pago) e visualize facilmente em que fase cada trabalho está.
 - **Orçamento estruturado:** Visualize peças, mão de obra e o total do serviço em uma tela detalhada. Compartilhe rapidamente o orçamento com o cliente via WhatsApp.

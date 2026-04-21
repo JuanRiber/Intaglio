@@ -11,6 +11,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useServices, ServiceStatus } from '../context/ServicesContext';
+import { useAuth } from '../context/AuthContext';
 import { colors } from '../constants/theme';
 import { formatCurrency, getServiceTotal, statusLabel } from '../utils/formatters';
 
@@ -24,6 +25,7 @@ const filterOptions = [
 
 export default function HomeScreen() {
   const { services, getMonthlyRevenue } = useServices();
+  const { currentUser } = useAuth();
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('todos');
@@ -96,6 +98,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.greetingCard}>
+        <Text style={styles.greetingEyebrow}>Bem-vindo de volta</Text>
+        <Text style={styles.greetingTitle}>{currentUser?.nome ? `${currentUser.nome.split(' ')[0]}, o palco é seu.` : 'Seu painel do Nexo'}</Text>
+      </View>
       <View style={styles.heroCard}>
         <Text style={styles.heroEyebrow}>Painel Nexo</Text>
         <Text style={styles.heroTitle}>Faturamento do mês</Text>
