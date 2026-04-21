@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from './src/screens/HomeScreen';
 import NewServiceScreen from './src/screens/NewServiceScreen';
 import ServiceDetailScreen from './src/screens/ServiceDetailScreen';
+import EditServiceScreen from './src/screens/EditServiceScreen';
 import { ServicesProvider } from './src/context/ServicesContext';
 
 const Tab = createBottomTabNavigator();
@@ -63,6 +64,11 @@ export default function App() {
             name="Detalhes do Serviço"
             component={ServiceDetailScreen}
             options={{ title: 'Detalhes do Serviço' }}
+          />
+          <Stack.Screen
+            name="Editar Serviço"
+            component={EditServiceScreen}
+            options={{ title: 'Editar Serviço' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

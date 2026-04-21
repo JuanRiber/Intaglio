@@ -9,11 +9,12 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { useServices, ServiceStatus } from '../context/ServicesContext';
 
 export default function ServiceDetailScreen() {
   const route = useRoute();
+  const navigation = useNavigation();
   const { serviceId } = route.params || {};
   const { services, updateStatus } = useServices();
 
@@ -120,6 +121,14 @@ export default function ServiceDetailScreen() {
       ) : (
         <Text style={styles.paidAt}>Pago em {paidAt ? new Date(paidAt).toLocaleDateString() : 'data indefinida'}</Text>
       )}
+
+      {/* Botão para editar o serviço */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Editar Serviço', { serviceId: service.id })}
+        style={styles.editButton}
+      >
+        <Text style={styles.editButtonText}>Editar serviço</Text>
+      </TouchableOpacity>
       <TouchableOpacity onPress={handleWhatsApp} style={styles.whatsButton}>
         <Text style={styles.whatsButtonText}>Enviar orçamento via WhatsApp</Text>
       </TouchableOpacity>
@@ -208,6 +217,17 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   whatsButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  editButton: {
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 4,
+    marginVertical: 8,
+  },
+  editButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',

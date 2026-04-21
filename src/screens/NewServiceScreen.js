@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useServices } from '../context/ServicesContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -38,13 +38,38 @@ export default function NewServiceScreen() {
   }
 
   function handleSubmit() {
-    if (!cliente || !equipamento) {
-      // simples validação: cliente e equipamento são obrigatórios
-      alert('Preencha pelo menos o nome do cliente e o equipamento.');
+    // Validação
+    if (!cliente.trim() || !equipamento.trim()) {
+      Alert.alert('Campos obrigatórios', 'Preencha o nome do cliente e o equipamento.');
       return;
     }
-    addService({ cliente, telefone, equipamento, problema, pecas: pecas.map((p) => ({ ...p, valor: parseFloat(p.valor) || 0 })), maoDeObra: parseFloat(maoDeObra) || 0 });
-    // Após salvar, voltamos para a Home. Poderíamos tocar "Light My Fire" do Doors.
+    // Validação de peças: todas precisam ter descrição e valor numérico
+    for (const peca of pecas) {
+      if (!peca.descricao.trim()) {
+        Alert.alert('Peça inválida', 'Todas as peças devem ter uma descrição.');
+        return;
+      }
+      const valorNum = parseFloat(peca.valor);
+      if (isNaN(valorNum) || valorNum < 0) {
+        Alert.alert('Peça inválida', `Valor inválido para a peça "${peca.descricao}".`);
+        return;
+      }
+    }
+    // Validação do valor da mão de obra
+    const maoNum = parseFloat(maoDeObra);
+    if (maoDeObra && (isNaN(maoNum) || maoNum < 0)) {
+      Alert.alert('Valor inválido', 'O valor da mão de obra deve ser um número não negativo.');
+      return;
+    }
+
+    addService({
+      cliente: cliente.trim(),
+      telefone: telefone.trim(),
+      equipamento: equipamento.trim(),
+      problema: problema.trim(),
+      pecas: pecas.map((p) => ({ descricao: p.descricao.trim(), valor: parseFloat(p.valor) || 0 })),
+      maoDeObra: parseFloat(maoDeObra) || 0,
+    });
     navigation.navigate('Home');
     // Resetar formulário
     setCliente('');

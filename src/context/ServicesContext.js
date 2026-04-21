@@ -8,7 +8,8 @@
  * introspectivo do rock clássico.
  */
 
-import React, { createContext, useReducer, useContext } from 'react';
+import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { v4 as uuidv4 } from 'uuid';
 
 // Definição dos status possíveis para um serviço. Mantemos tudo em minúsculas
@@ -25,6 +26,8 @@ export const ServiceStatus = {
 // Estado inicial: nenhuma receita, nenhuma dor de cabeça. Começamos com uma
 // lista vazia de serviços, prontos para adicionar novos riffs.
 const initialState = {
+  // A lista é carregada do armazenamento assim que o aplicativo é iniciado. Até
+  // lá, começamos com um array vazio.
   services: [],
 };
 
@@ -45,6 +48,19 @@ function servicesReducer(state, action) {
         ),
       };
     }
+    case 'EDIT_SERVICE': {
+      const { id, updates } = action.payload;
+      return {
+        ...state,
+        services: state.services.map((svc) =>
+          svc.id === id ? { ...svc, ...updates } : svc
+        ),
+      };
+    }
+    case 'SET_SERVICES': {
+      // Substitui a lista existente por aquela recuperada do armazenamento.
+      return { ...state, services: action.payload || [] };
+    }
     default:
       return state;
   }
@@ -57,6 +73,34 @@ const ServicesContext = createContext();
 // serviços, além de calcular faturamento mensal.
 export function ServicesProvider({ children }) {
   const [state, dispatch] = useReducer(servicesReducer, initialState);
+
+  // Carrega os serviços do armazenamento local na inicialização.
+  useEffect(() => {
+    async function loadServices() {
+      try {
+        const stored = await AsyncStorage.getItem('nexo_services');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          dispatch({ type: 'SET_SERVICES', payload: parsed });
+        }
+      } catch (error) {
+        console.warn('Falha ao carregar serviços do armazenamento', error);
+      }
+    }
+    loadServices();
+  }, []);
+
+  // Salva a lista de serviços sempre que ela mudar.
+  useEffect(() => {
+    async function saveServices() {
+      try {
+        await AsyncStorage.setItem('nexo_services', JSON.stringify(state.services));
+      } catch (error) {
+        console.warn('Falha ao salvar serviços no armazenamento', error);
+      }
+    }
+    saveServices();
+  }, [state.services]);
 
   // Função para adicionar novo serviço. Detalhamos cada propriedade como
   // se estivéssemos compondo os versos de "Riders on the Storm" do The Doors.
@@ -73,6 +117,15 @@ export function ServicesProvider({ children }) {
     dispatch({
       type: 'UPDATE_STATUS',
       payload: { id, status },
+    });
+  }
+
+  // Atualiza os dados de um serviço existente com novos valores. Não altera o
+  // status ou identificadores, apenas os campos fornecidos em updates.
+  function editService(id, updates) {
+    dispatch({
+      type: 'EDIT_SERVICE',
+      payload: { id, updates },
     });
   }
 
@@ -93,6 +146,7 @@ export function ServicesProvider({ children }) {
         services: state.services,
         addService,
         updateStatus,
+        editService,
         getMonthlyRevenue,
       }}
     >
