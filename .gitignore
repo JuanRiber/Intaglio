@@ -1,0 +1,11 @@
+# Dependências
+node_modules/
+.expo/
+.expo-shared/
+
+# IDEs
+.vscode/
+.idea/
+
+# Arquivos de ambiente
+.env
