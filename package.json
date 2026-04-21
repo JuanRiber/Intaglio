@@ -1,6 +1,6 @@
 {
   "name": "nexo",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Aplicativo Nexo – organização de serviços e orçamentos para profissionais autônomos.",
   "main": "node_modules/expo/AppEntry.js",

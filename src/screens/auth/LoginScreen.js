@@ -1,70 +1,55 @@
-
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../context/AuthContext';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../../constants/theme';
+import PrimaryButton from '../../components/PrimaryButton';
+import SectionCard from '../../components/SectionCard';
+import { useAuth } from '../../context/AuthContext';
 
-export default function LoginScreen() {
-  const navigation = useNavigation();
+export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
   async function handleLogin() {
     if (!email.trim() || !senha.trim()) {
-      Alert.alert('Campos obrigatórios', 'Preencha email e senha para entrar.');
+      Alert.alert('Campos obrigatórios', 'Preencha email e senha.');
       return;
     }
 
-    const response = await login({ email, senha });
-
-    if (!response.success) {
-      Alert.alert('Não foi possível entrar', response.message);
+    const result = await login({ email, senha });
+    if (!result.success) {
+      Alert.alert('Não foi possível entrar', result.message);
     }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Entre no seu palco de organização.</Text>
-      <Text style={styles.subtitle}>
-        O Nexo guarda serviços, orçamentos e o ritmo do seu faturamento no mesmo lugar.
-      </Text>
+      <Text style={styles.title}>Entrar</Text>
+      <Text style={styles.subtitle}>Acesse sua rotina de serviços, clientes e financeiro em um só lugar.</Text>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
+      <SectionCard>
         <TextInput
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="voce@exemplo.com"
-          placeholderTextColor={colors.textMuted}
           value={email}
           onChangeText={setEmail}
+          placeholder="Email"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="email-address"
+          autoCapitalize="none"
           style={styles.input}
         />
-
-        <Text style={styles.label}>Senha</Text>
         <TextInput
-          secureTextEntry
-          placeholder="Sua senha"
-          placeholderTextColor={colors.textMuted}
           value={senha}
           onChangeText={setSenha}
+          placeholder="Senha"
+          placeholderTextColor={colors.textMuted}
+          secureTextEntry
           style={styles.input}
         />
 
-        <Pressable onPress={handleLogin} style={styles.primaryButton}>
-          <Text style={styles.primaryText}>Entrar</Text>
-        </Pressable>
-
-        <Pressable onPress={() => navigation.navigate('Criar Conta')} style={styles.secondaryButton}>
-          <Text style={styles.secondaryText}>Criar conta</Text>
-        </Pressable>
-
-        <Pressable onPress={() => navigation.navigate('Recuperar Senha')}>
-          <Text style={styles.linkText}>Esqueci minha senha</Text>
-        </Pressable>
-      </View>
+        <PrimaryButton label="Entrar" onPress={handleLogin} style={styles.actionSpacing} />
+        <PrimaryButton label="Criar conta" variant="ghost" onPress={() => navigation.navigate('Cadastro')} style={styles.actionSpacing} />
+        <PrimaryButton label="Esqueci minha senha" variant="ghost" onPress={() => navigation.navigate('Recuperar senha')} />
+      </SectionCard>
     </View>
   );
 }
@@ -73,73 +58,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 28,
+    padding: 20,
+    justifyContent: 'center',
   },
   title: {
     color: colors.white,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 30,
     fontWeight: '800',
-    marginTop: 24,
+    marginBottom: 8,
   },
   subtitle: {
     color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 14,
-    maxWidth: 340,
-  },
-  form: {
-    marginTop: 34,
-    gap: 12,
-  },
-  label: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
+    lineHeight: 22,
+    marginBottom: 18,
   },
   input: {
-    height: 52,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSoft,
+    color: colors.white,
     borderRadius: 14,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    color: colors.white,
-    paddingHorizontal: 14,
+    padding: 14,
+    marginBottom: 12,
+    fontSize: 16,
   },
-  primaryButton: {
-    marginTop: 12,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  secondaryButton: {
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  linkText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 8,
+  actionSpacing: {
+    marginBottom: 10,
   },
 });

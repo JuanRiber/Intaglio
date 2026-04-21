@@ -1,31 +1,9 @@
-# Changelog Nexo
+# Changelog
 
-## 0.1.3
-- splash screen com micro animação e fundo escuro elegante
-- onboarding curto em 3 passos
-- login local com email e senha
-- criação de conta local
-- recuperação de senha simulada
-- contexto de autenticação com persistência local
-- saudação do usuário na home
-- logout rápido pela tela inicial
-
-## 0.1.2
-- exclusão de serviços com confirmação
-- busca por cliente, equipamento e problema
-- filtro rápido por status
-- painel inicial com indicadores principais
-- layout mais consistente na home e nas telas de formulário
-- orçamento mais claro na tela de detalhes
-- melhor tratamento de telefone e moeda
-
-## 0.1.1
-- persistência local com AsyncStorage
-- edição de serviços
-- validações básicas melhores
-
-## 0.1.0
-- estrutura inicial do app
-- cadastro de serviços
-- atualização de status
-- base do Nexo em React Native / Expo
+## 0.1.4
+- adiciona fluxo local de splash, onboarding, login, cadastro e recuperação de senha
+- adiciona perfil profissional com persistência local
+- reorganiza a navegação principal para Início, Serviços, Clientes, Financeiro e Mais
+- adiciona dashboard inicial, lista de clientes e visão financeira básica
+- mantém o fluxo de serviços com cadastro, edição, status, WhatsApp e exclusão
+- ajusta o padrão de comentários e nomes para um estilo mais limpo

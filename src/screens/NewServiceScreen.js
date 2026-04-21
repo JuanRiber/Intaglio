@@ -1,22 +1,14 @@
-/*
- * NewServiceScreen.js
- *
- * Esta tela permite criar um novo serviço, como se estivéssemos compondo
- * "Paranoid" do Black Sabbath: vários riffs (campos) se combinam para
- * construir algo poderoso. Na 0.1.2 o formulário ficou mais limpo e mais
- * confortável para o uso diário.
- */
-
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useServices } from '../context/ServicesContext';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../constants/theme';
+import { useServices } from '../context/ServicesContext';
 import { formatPhone, normalizePhone } from '../utils/formatters';
 
 export default function NewServiceScreen() {
-  const { addService } = useServices();
   const navigation = useNavigation();
+  const { addService } = useServices();
+
   const [cliente, setCliente] = useState('');
   const [telefone, setTelefone] = useState('');
   const [equipamento, setEquipamento] = useState('');
@@ -24,41 +16,50 @@ export default function NewServiceScreen() {
   const [pecas, setPecas] = useState([]);
   const [maoDeObra, setMaoDeObra] = useState('');
 
-  function handleAddPeca() {
-    setPecas([...pecas, { descricao: '', valor: '' }]);
+  function addAresPart() {
+    setPecas((current) => [...current, { descricao: '', valor: '' }]);
   }
 
-  function handlePecaChange(index, field, value) {
-    const updated = pecas.map((p, i) => (i === index ? { ...p, [field]: value } : p));
-    setPecas(updated);
+  function updateAresPart(index, field, value) {
+    setPecas((current) => current.map((piece, pieceIndex) => (
+      pieceIndex === index ? { ...piece, [field]: value } : piece
+    )));
   }
 
-  function handleRemovePeca(index) {
-    const updated = pecas.filter((_, i) => i !== index);
-    setPecas(updated);
+  function removeAresPart(index) {
+    setPecas((current) => current.filter((_, pieceIndex) => pieceIndex !== index));
   }
 
-  function handleSubmit() {
+  function validateServiceDraft() {
     if (!cliente.trim() || !equipamento.trim()) {
       Alert.alert('Campos obrigatórios', 'Preencha o nome do cliente e o equipamento.');
-      return;
+      return false;
     }
 
-    for (const peca of pecas) {
-      if (!peca.descricao.trim()) {
-        Alert.alert('Peça inválida', 'Todas as peças devem ter uma descrição.');
-        return;
+    for (const piece of pecas) {
+      if (!piece.descricao.trim()) {
+        Alert.alert('Peça inválida', 'Todas as peças precisam de descrição.');
+        return false;
       }
-      const valorNum = parseFloat(peca.valor);
-      if (Number.isNaN(valorNum) || valorNum < 0) {
-        Alert.alert('Peça inválida', `Valor inválido para a peça "${peca.descricao}".`);
-        return;
+
+      const numericValue = parseFloat(piece.valor);
+      if (Number.isNaN(numericValue) || numericValue < 0) {
+        Alert.alert('Peça inválida', `O valor da peça "${piece.descricao}" não é válido.`);
+        return false;
       }
     }
 
-    const maoNum = parseFloat(maoDeObra);
-    if (maoDeObra && (Number.isNaN(maoNum) || maoNum < 0)) {
+    const laborValue = parseFloat(maoDeObra);
+    if (maoDeObra && (Number.isNaN(laborValue) || laborValue < 0)) {
       Alert.alert('Valor inválido', 'O valor da mão de obra deve ser um número não negativo.');
+      return false;
+    }
+
+    return true;
+  }
+
+  function handleSaveService() {
+    if (!validateServiceDraft()) {
       return;
     }
 
@@ -67,96 +68,64 @@ export default function NewServiceScreen() {
       telefone: normalizePhone(telefone),
       equipamento: equipamento.trim(),
       problema: problema.trim(),
-      pecas: pecas.map((p) => ({ descricao: p.descricao.trim(), valor: parseFloat(p.valor) || 0 })),
+      pecas: pecas.map((piece) => ({ descricao: piece.descricao.trim(), valor: parseFloat(piece.valor) || 0 })),
       maoDeObra: parseFloat(maoDeObra) || 0,
     });
 
-    Alert.alert('Serviço salvo', 'O novo serviço entrou no fluxo do Nexo.');
-    navigation.navigate('Home');
-    setCliente('');
-    setTelefone('');
-    setEquipamento('');
-    setProblema('');
-    setPecas([]);
-    setMaoDeObra('');
+    Alert.alert('Serviço salvo', 'O novo serviço foi registrado com sucesso.');
+    navigation.goBack();
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Novo serviço</Text>
-      <Text style={styles.subtitle}>Registre o essencial e deixe o resto seguir no compasso do app.</Text>
+      <Text style={styles.subtitle}>Registre o essencial do atendimento e siga para o próximo passo do fluxo.</Text>
 
-      <TextInput
-        placeholder="Cliente"
-        placeholderTextColor={colors.textMuted}
-        style={styles.input}
-        value={cliente}
-        onChangeText={setCliente}
-      />
-      <TextInput
-        placeholder="Telefone"
-        placeholderTextColor={colors.textMuted}
-        style={styles.input}
-        value={telefone}
-        onChangeText={(value) => setTelefone(formatPhone(value))}
-        keyboardType="phone-pad"
-      />
-      <TextInput
-        placeholder="Equipamento"
-        placeholderTextColor={colors.textMuted}
-        style={styles.input}
-        value={equipamento}
-        onChangeText={setEquipamento}
-      />
-      <TextInput
-        placeholder="Descrição do problema"
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, styles.inputMultiline]}
-        value={problema}
-        onChangeText={setProblema}
-        multiline
-      />
+      <TextInput style={styles.input} placeholder="Cliente" placeholderTextColor={colors.textMuted} value={cliente} onChangeText={setCliente} />
+      <TextInput style={styles.input} placeholder="Telefone" placeholderTextColor={colors.textMuted} value={telefone} onChangeText={(value) => setTelefone(formatPhone(value))} keyboardType="phone-pad" />
+      <TextInput style={styles.input} placeholder="Equipamento" placeholderTextColor={colors.textMuted} value={equipamento} onChangeText={setEquipamento} />
+      <TextInput style={[styles.input, styles.inputMultiline]} placeholder="Descrição do problema" placeholderTextColor={colors.textMuted} value={problema} onChangeText={setProblema} multiline />
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Peças utilizadas</Text>
-        <TouchableOpacity onPress={handleAddPeca} style={styles.addButton}>
+        <TouchableOpacity onPress={addAresPart} style={styles.addButton}>
           <Text style={styles.addButtonText}>Adicionar peça</Text>
         </TouchableOpacity>
       </View>
 
-      {pecas.map((peca, index) => (
-        <View key={index} style={styles.pecaContainer}>
+      {pecas.map((piece, index) => (
+        <View key={String(index)} style={styles.pieceRow}>
           <TextInput
+            style={[styles.input, styles.pieceDescription]}
             placeholder="Descrição"
             placeholderTextColor={colors.textMuted}
-            style={[styles.input, styles.pieceDescription]}
-            value={peca.descricao}
-            onChangeText={(value) => handlePecaChange(index, 'descricao', value)}
+            value={piece.descricao}
+            onChangeText={(value) => updateAresPart(index, 'descricao', value)}
           />
           <TextInput
+            style={[styles.input, styles.pieceValue]}
             placeholder="Valor"
             placeholderTextColor={colors.textMuted}
-            style={[styles.input, styles.pieceValue]}
-            value={peca.valor.toString()}
-            onChangeText={(value) => handlePecaChange(index, 'valor', value.replace(',', '.'))}
+            value={piece.valor.toString()}
+            onChangeText={(value) => updateAresPart(index, 'valor', value.replace(',', '.'))}
             keyboardType="numeric"
           />
-          <TouchableOpacity onPress={() => handleRemovePeca(index)} style={styles.removeButton}>
+          <TouchableOpacity onPress={() => removeAresPart(index)} style={styles.removeButton}>
             <Text style={styles.removeButtonText}>X</Text>
           </TouchableOpacity>
         </View>
       ))}
 
       <TextInput
+        style={styles.input}
         placeholder="Valor da mão de obra"
         placeholderTextColor={colors.textMuted}
-        style={styles.input}
-        value={maoDeObra.toString()}
+        value={maoDeObra}
         onChangeText={(value) => setMaoDeObra(value.replace(',', '.'))}
         keyboardType="numeric"
       />
 
-      <Pressable style={styles.submitButton} onPress={handleSubmit}>
+      <Pressable style={styles.submitButton} onPress={handleSaveService}>
         <Text style={styles.submitButtonText}>Salvar serviço</Text>
       </Pressable>
     </ScrollView>
@@ -169,9 +138,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   title: {
+    color: colors.white,
     fontSize: 24,
     fontWeight: '800',
-    color: colors.white,
     marginBottom: 6,
   },
   subtitle: {
@@ -216,35 +185,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  pecaContainer: {
+  pieceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+    gap: 8,
+    alignItems: 'flex-start',
   },
   pieceDescription: {
     flex: 1,
-    marginRight: 8,
-    marginBottom: 0,
   },
   pieceValue: {
-    width: 96,
-    marginRight: 8,
-    marginBottom: 0,
+    width: 92,
   },
   removeButton: {
     backgroundColor: colors.danger,
-    paddingHorizontal: 11,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    borderRadius: 12,
   },
   removeButtonText: {
     color: colors.white,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   submitButton: {
-    backgroundColor: colors.success,
-    borderRadius: 14,
+    backgroundColor: colors.primary,
     paddingVertical: 15,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 20,

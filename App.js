@@ -1,33 +1,30 @@
-
-/*
- * App.js
- *
- * O Nexo agora entra na fase 0.1.3 com um fluxo de acesso digno de abertura
- * de álbum clássico: splash, onboarding e autenticação local antes do palco
- * principal. A base de serviços continua viva, mas agora a jornada começa do
- * jeito certo.
- */
-
-import React from 'react';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, { useEffect, useMemo, useState } from 'react';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import HomeScreen from './src/screens/HomeScreen';
-import NewServiceScreen from './src/screens/NewServiceScreen';
-import ServiceDetailScreen from './src/screens/ServiceDetailScreen';
-import EditServiceScreen from './src/screens/EditServiceScreen';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { ProfileProvider, useProfile } from './src/context/ProfileContext';
+import { ServicesProvider } from './src/context/ServicesContext';
+import { colors } from './src/constants/theme';
 import SplashScreen from './src/screens/auth/SplashScreen';
 import OnboardingScreen from './src/screens/auth/OnboardingScreen';
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
-import { ServicesProvider } from './src/context/ServicesContext';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { colors } from './src/constants/theme';
+import CompleteProfileScreen from './src/screens/profile/CompleteProfileScreen';
+import DashboardScreen from './src/screens/main/DashboardScreen';
+import ServicesScreen from './src/screens/main/ServicesScreen';
+import ClientsScreen from './src/screens/main/ClientsScreen';
+import FinanceScreen from './src/screens/main/FinanceScreen';
+import MoreScreen from './src/screens/main/MoreScreen';
+import NewServiceScreen from './src/screens/NewServiceScreen';
+import ServiceDetailScreen from './src/screens/ServiceDetailScreen';
+import EditServiceScreen from './src/screens/EditServiceScreen';
 
+const RootStack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -41,101 +38,78 @@ const navigationTheme = {
   },
 };
 
+function AuthNavigator({ initialRouteName }) {
+  return (
+    <AuthStack.Navigator
+      initialRouteName={initialRouteName}
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <AuthStack.Screen name="Onboarding" component={OnboardingScreen} />
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="Cadastro" component={RegisterScreen} />
+      <AuthStack.Screen name="Recuperar senha" component={ForgotPasswordScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
 function MainTabs() {
-  const { logout } = useAuth();
+  const tabIconOrpheus = useMemo(
+    () => ({
+      'Início': 'home-outline',
+      Serviços: 'construct-outline',
+      Clientes: 'people-outline',
+      Financeiro: 'cash-outline',
+      Mais: 'grid-outline',
+    }),
+    []
+  );
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.white,
-        headerShadowVisible: false,
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 64,
-          paddingTop: 6,
-          paddingBottom: 8,
-        },
-        tabBarIcon: ({ color, size }) => {
-          let iconName = 'ellipse-outline';
-
-          if (route.name === 'Início') {
-            iconName = 'home-outline';
-          } else if (route.name === 'Novo Serviço') {
-            iconName = 'add-circle-outline';
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          height: 68,
+          paddingTop: 8,
+          paddingBottom: 10,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={tabIconOrpheus[route.name]} size={size} color={color} />
+        ),
       })}
     >
-      <Tab.Screen
-        name="Início"
-        component={HomeScreen}
-        options={{
-          headerRight: () => (
-            <Ionicons
-              onPress={logout}
-              name="log-out-outline"
-              size={22}
-              color={colors.textMuted}
-              style={{ marginRight: 6 }}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen name="Novo Serviço" component={NewServiceScreen} />
+      <Tab.Screen name="Início" component={DashboardScreen} />
+      <Tab.Screen name="Serviços" component={ServicesScreen} />
+      <Tab.Screen name="Clientes" component={ClientsScreen} />
+      <Tab.Screen name="Financeiro" component={FinanceScreen} />
+      <Tab.Screen name="Mais" component={MoreScreen} />
     </Tab.Navigator>
   );
 }
 
-function AuthStack({ initialRouteName }) {
-  return (
-    <Stack.Navigator
-      initialRouteName={initialRouteName}
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.white,
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Screen
-        name="Onboarding"
-        component={OnboardingScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Entrar no Nexo' }} />
-      <Stack.Screen name="Criar Conta" component={RegisterScreen} options={{ title: 'Criar conta' }} />
-      <Stack.Screen
-        name="Recuperar Senha"
-        component={ForgotPasswordScreen}
-        options={{ title: 'Recuperar senha' }}
-      />
-    </Stack.Navigator>
-  );
-}
-
-function RootNavigator() {
+function RootFlow() {
   const { isBooting, onboardingSeen, isAuthenticated } = useAuth();
+  const { isProfileBooting, hasCompletedProfile } = useProfile();
+  const [showSplash, setShowSplash] = useState(true);
 
-  if (isBooting) {
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash || isBooting || isProfileBooting) {
     return <SplashScreen />;
   }
 
-  if (!onboardingSeen) {
-    return <AuthStack initialRouteName="Onboarding" />;
-  }
-
-  if (!isAuthenticated) {
-    return <AuthStack initialRouteName="Login" />;
-  }
-
   return (
-    <Stack.Navigator
+    <RootStack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.white,
@@ -143,29 +117,33 @@ function RootNavigator() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-      <Stack.Screen
-        name="Detalhes do Serviço"
-        component={ServiceDetailScreen}
-        options={{ title: 'Detalhes do Serviço' }}
-      />
-      <Stack.Screen
-        name="Editar Serviço"
-        component={EditServiceScreen}
-        options={{ title: 'Editar Serviço' }}
-      />
-    </Stack.Navigator>
+      {!onboardingSeen || !isAuthenticated ? (
+        <RootStack.Screen name="AuthFlow" options={{ headerShown: false }}>{() => <AuthNavigator initialRouteName={onboardingSeen ? "Login" : "Onboarding"} />}</RootStack.Screen>
+      ) : !hasCompletedProfile ? (
+        <RootStack.Screen name="Completar perfil" component={CompleteProfileScreen} options={{ title: 'Perfil profissional' }} />
+      ) : (
+        <>
+          <RootStack.Screen name="NexoTabs" component={MainTabs} options={{ headerShown: false }} />
+          <RootStack.Screen name="Novo serviço" component={NewServiceScreen} options={{ title: 'Novo serviço' }} />
+          <RootStack.Screen name="Detalhes do Serviço" component={ServiceDetailScreen} options={{ title: 'Detalhes do serviço' }} />
+          <RootStack.Screen name="Editar serviço" component={EditServiceScreen} options={{ title: 'Editar serviço' }} />
+          <RootStack.Screen name="Completar perfil" component={CompleteProfileScreen} options={{ title: 'Perfil profissional' }} />
+        </>
+      )}
+    </RootStack.Navigator>
   );
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <ServicesProvider>
-        <NavigationContainer theme={navigationTheme}>
-          <RootNavigator />
-        </NavigationContainer>
-      </ServicesProvider>
+      <ProfileProvider>
+        <ServicesProvider>
+          <NavigationContainer theme={navigationTheme}>
+            <RootFlow />
+          </NavigationContainer>
+        </ServicesProvider>
+      </ProfileProvider>
     </AuthProvider>
   );
 }

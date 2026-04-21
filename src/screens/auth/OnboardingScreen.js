@@ -1,77 +1,57 @@
-
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../context/AuthContext';
+import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../constants/theme';
+import PrimaryButton from '../../components/PrimaryButton';
+import SectionCard from '../../components/SectionCard';
+import { useAuth } from '../../context/AuthContext';
 
-const slides = [
+const slidesFreya = [
   {
     title: 'Organize seus serviços',
-    description: 'Registre cliente, equipamento, problema e status sem depender de papel solto ou conversa perdida.',
+    description: 'Centralize cliente, equipamento, peças, mão de obra e status em um fluxo simples.',
   },
   {
     title: 'Envie orçamentos',
-    description: 'Monte um orçamento claro com peças e mão de obra e compartilhe a mensagem com mais confiança.',
+    description: 'Monte o resumo do serviço e compartilhe pelo WhatsApp sem sair da rotina.',
   },
   {
     title: 'Acompanhe seu faturamento',
-    description: 'Veja o que entrou no mês e entenda o ritmo do seu trabalho com menos ruído e mais visão.',
+    description: 'Veja o que está ativo, pago e pendente para decidir o próximo passo com clareza.',
   },
 ];
 
 export default function OnboardingScreen() {
-  const navigation = useNavigation();
+  const [activeIndex, setActiveIndex] = useState(0);
   const { completeOnboarding } = useAuth();
-  const [index, setIndex] = useState(0);
 
-  const current = useMemo(() => slides[index], [index]);
+  const activeSlide = useMemo(() => slidesFreya[activeIndex], [activeIndex]);
+  const isLastSlide = activeIndex === slidesFreya.length - 1;
 
-  async function handleFinish() {
-    await completeOnboarding();
-    navigation.replace('Login');
-  }
-
-  function handleNext() {
-    if (index === slides.length - 1) {
-      handleFinish();
+  function handleContinue() {
+    if (isLastSlide) {
+      completeOnboarding();
       return;
     }
-
-    setIndex((value) => value + 1);
+    setActiveIndex((current) => current + 1);
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.brand}>Nexo</Text>
-        <Text style={styles.kicker}>0.1.3 · fluxo de entrada</Text>
-        <Text style={styles.title}>{current.title}</Text>
-        <Text style={styles.description}>{current.description}</Text>
+      <Text style={styles.eyebrow}>Nexo em 3 passos</Text>
+      <SectionCard style={styles.heroCard}>
+        <View style={styles.illustrationHalo} />
+        <Text style={styles.title}>{activeSlide.title}</Text>
+        <Text style={styles.description}>{activeSlide.description}</Text>
+      </SectionCard>
+
+      <View style={styles.dotsRow}>
+        {slidesFreya.map((_, index) => (
+          <View key={String(index)} style={[styles.dot, index === activeIndex && styles.dotActive]} />
+        ))}
       </View>
 
-      <View style={styles.footer}>
-        <View style={styles.dotsRow}>
-          {slides.map((slide, slideIndex) => (
-            <View
-              key={slide.title}
-              style={[styles.dot, slideIndex === index && styles.dotActive]}
-            />
-          ))}
-        </View>
-
-        <View style={styles.actionsRow}>
-          <Pressable onPress={handleFinish} style={styles.ghostButton}>
-            <Text style={styles.ghostText}>Pular</Text>
-          </Pressable>
-
-          <Pressable onPress={handleNext} style={styles.primaryButton}>
-            <Text style={styles.primaryText}>
-              {index === slides.length - 1 ? 'Começar' : 'Continuar'}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <PrimaryButton label={isLastSlide ? 'Começar' : 'Continuar'} onPress={handleContinue} style={styles.primaryAction} />
+      <PrimaryButton label="Pular" variant="ghost" onPress={completeOnboarding} />
     </View>
   );
 }
@@ -80,90 +60,57 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 72,
-    paddingBottom: 40,
-    justifyContent: 'space-between',
+    padding: 22,
+    justifyContent: 'center',
   },
-  hero: {
-    marginTop: 18,
-  },
-  brand: {
-    color: colors.primary,
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+  eyebrow: {
+    color: colors.accent,
     textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 14,
   },
-  kicker: {
-    marginTop: 14,
-    color: colors.textMuted,
-    fontSize: 13,
-    letterSpacing: 0.5,
+  heroCard: {
+    minHeight: 300,
+    justifyContent: 'center',
+    marginBottom: 22,
+  },
+  illustrationHalo: {
+    width: 74,
+    height: 74,
+    borderRadius: 24,
+    backgroundColor: colors.surfaceSoft,
+    marginBottom: 20,
   },
   title: {
-    marginTop: 22,
     color: colors.white,
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 28,
     fontWeight: '800',
-    maxWidth: 320,
+    marginBottom: 10,
   },
   description: {
-    marginTop: 18,
     color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 24,
-    maxWidth: 320,
-  },
-  footer: {
-    gap: 24,
+    lineHeight: 22,
+    fontSize: 15,
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 22,
   },
   dot: {
     width: 10,
     height: 10,
-    borderRadius: 99,
+    borderRadius: 5,
     backgroundColor: colors.border,
   },
   dotActive: {
-    width: 28,
     backgroundColor: colors.primary,
+    width: 24,
   },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  ghostButton: {
-    flex: 1,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  ghostText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  primaryButton: {
-    flex: 1.3,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-  },
-  primaryText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '800',
+  primaryAction: {
+    marginBottom: 12,
   },
 });

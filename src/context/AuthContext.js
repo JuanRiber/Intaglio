@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STORAGE_KEYS = {
-  onboardingSeen: 'nexo_onboarding_seen',
-  user: 'nexo_current_user',
-  account: 'nexo_registered_account',
+const authKeysOrpheus = {
+  onboardingSeen: 'nexo_onboarding_seen_orpheus',
+  currentUser: 'nexo_current_user_orpheus',
+  registeredAccount: 'nexo_registered_account_orpheus',
 };
 
 const AuthContext = createContext(null);
@@ -15,52 +15,42 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    async function restoreSession() {
+    async function restoreOrpheusSession() {
       try {
         const [storedOnboarding, storedUser] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.onboardingSeen),
-          AsyncStorage.getItem(STORAGE_KEYS.user),
+          AsyncStorage.getItem(authKeysOrpheus.onboardingSeen),
+          AsyncStorage.getItem(authKeysOrpheus.currentUser),
         ]);
 
         setOnboardingSeen(storedOnboarding === 'true');
         setCurrentUser(storedUser ? JSON.parse(storedUser) : null);
       } catch (error) {
-        console.warn('Falha ao restaurar a sessão do Nexo', error);
+        console.warn('Falha ao restaurar a sessão', error);
       } finally {
         setIsBooting(false);
       }
     }
 
-    restoreSession();
+    restoreOrpheusSession();
   }, []);
 
   const completeOnboarding = useCallback(async () => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.onboardingSeen, 'true');
-      setOnboardingSeen(true);
-    } catch (error) {
-      console.warn('Falha ao salvar onboarding', error);
-    }
+    await AsyncStorage.setItem(authKeysOrpheus.onboardingSeen, 'true');
+    setOnboardingSeen(true);
   }, []);
 
   const login = useCallback(async ({ email, senha }) => {
     const normalizedEmail = email.trim().toLowerCase();
+    const rawAccount = await AsyncStorage.getItem(authKeysOrpheus.registeredAccount);
 
-    const rawAccount = await AsyncStorage.getItem(STORAGE_KEYS.account);
     if (!rawAccount) {
-      return {
-        success: false,
-        message: 'Nenhuma conta encontrada. Crie sua conta para entrar no Nexo.',
-      };
+      return { success: false, message: 'Nenhuma conta foi encontrada. Crie sua conta para entrar.' };
     }
 
     const account = JSON.parse(rawAccount);
 
     if (account.email !== normalizedEmail || account.senha !== senha) {
-      return {
-        success: false,
-        message: 'Email ou senha inválidos.',
-      };
+      return { success: false, message: 'Email ou senha inválidos.' };
     }
 
     const sessionUser = {
@@ -69,19 +59,16 @@ export function AuthProvider({ children }) {
       email: account.email,
     };
 
-    await AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(sessionUser));
+    await AsyncStorage.setItem(authKeysOrpheus.currentUser, JSON.stringify(sessionUser));
     setCurrentUser(sessionUser);
-
     return { success: true };
   }, []);
 
   const register = useCallback(async ({ nome, telefone, email, senha }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-
     const account = {
       nome: nome.trim(),
       telefone: telefone.trim(),
-      email: normalizedEmail,
+      email: email.trim().toLowerCase(),
       senha,
       createdAt: new Date().toISOString(),
     };
@@ -93,72 +80,59 @@ export function AuthProvider({ children }) {
     };
 
     await AsyncStorage.multiSet([
-      [STORAGE_KEYS.account, JSON.stringify(account)],
-      [STORAGE_KEYS.user, JSON.stringify(sessionUser)],
-      [STORAGE_KEYS.onboardingSeen, 'true'],
+      [authKeysOrpheus.registeredAccount, JSON.stringify(account)],
+      [authKeysOrpheus.currentUser, JSON.stringify(sessionUser)],
+      [authKeysOrpheus.onboardingSeen, 'true'],
     ]);
 
     setOnboardingSeen(true);
     setCurrentUser(sessionUser);
-
     return { success: true };
   }, []);
 
   const requestPasswordReset = useCallback(async ({ email }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const rawAccount = await AsyncStorage.getItem(STORAGE_KEYS.account);
+    const rawAccount = await AsyncStorage.getItem(authKeysOrpheus.registeredAccount);
 
     if (!rawAccount) {
-      return {
-        success: false,
-        message: 'Nenhuma conta cadastrada foi encontrada para este aplicativo.',
-      };
+      return { success: false, message: 'Nenhuma conta cadastrada foi encontrada.' };
     }
 
     const account = JSON.parse(rawAccount);
-
     if (account.email !== normalizedEmail) {
-      return {
-        success: false,
-        message: 'Não encontramos esse email por aqui.',
-      };
+      return { success: false, message: 'Não encontramos esse email.' };
     }
 
     return {
       success: true,
-      message: 'Enviamos um link simbólico de recuperação. Na próxima versão isso será integrado de verdade.',
+      message: 'Enviamos um link simbólico de recuperação. A integração real entra depois.',
     };
   }, []);
 
   const logout = useCallback(async () => {
-    await AsyncStorage.removeItem(STORAGE_KEYS.user);
+    await AsyncStorage.removeItem(authKeysOrpheus.currentUser);
     setCurrentUser(null);
   }, []);
 
-  const value = useMemo(
-    () => ({
-      isBooting,
-      onboardingSeen,
-      isAuthenticated: Boolean(currentUser),
-      currentUser,
-      completeOnboarding,
-      login,
-      register,
-      requestPasswordReset,
-      logout,
-    }),
-    [completeOnboarding, currentUser, isBooting, login, onboardingSeen, register, requestPasswordReset, logout]
-  );
+  const value = useMemo(() => ({
+    isBooting,
+    onboardingSeen,
+    isAuthenticated: Boolean(currentUser),
+    currentUser,
+    completeOnboarding,
+    login,
+    register,
+    requestPasswordReset,
+    logout,
+  }), [completeOnboarding, currentUser, isBooting, login, onboardingSeen, logout, register, requestPasswordReset]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
   if (!context) {
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
-
   return context;
 }

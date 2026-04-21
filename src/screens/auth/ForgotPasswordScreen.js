@@ -1,52 +1,41 @@
-
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../../constants/theme';
+import PrimaryButton from '../../components/PrimaryButton';
+import SectionCard from '../../components/SectionCard';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ForgotPasswordScreen() {
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
 
-  async function handleReset() {
+  async function handleRequestReset() {
     if (!email.trim()) {
-      Alert.alert('Informe o email', 'Digite o email da conta para continuar.');
+      Alert.alert('Campo obrigatório', 'Informe o email cadastrado.');
       return;
     }
 
-    const response = await requestPasswordReset({ email });
-
-    if (!response.success) {
-      Alert.alert('Não foi possível continuar', response.message);
-      return;
-    }
-
-    Alert.alert('Confirmação enviada', response.message);
+    const result = await requestPasswordReset({ email });
+    Alert.alert(result.success ? 'Solicitação enviada' : 'Não foi possível continuar', result.message);
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recupere seu acesso.</Text>
-      <Text style={styles.subtitle}>
-        Nesta versão o envio é simbólico, mas o fluxo já está pronto para a integração real.
-      </Text>
+      <Text style={styles.title}>Recuperar senha</Text>
+      <Text style={styles.subtitle}>Informe o email da conta para receber um retorno simbólico de recuperação.</Text>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
+      <SectionCard>
         <TextInput
           value={email}
           onChangeText={setEmail}
-          style={styles.input}
-          placeholder="voce@exemplo.com"
+          placeholder="Email"
           placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
           keyboardType="email-address"
+          autoCapitalize="none"
+          style={styles.input}
         />
-
-        <Pressable onPress={handleReset} style={styles.primaryButton}>
-          <Text style={styles.primaryText}>Enviar link / código</Text>
-        </Pressable>
-      </View>
+        <PrimaryButton label="Enviar link / código" onPress={handleRequestReset} />
+      </SectionCard>
     </View>
   );
 }
@@ -55,52 +44,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: 24,
-    paddingTop: 28,
+    padding: 20,
+    justifyContent: 'center',
   },
   title: {
     color: colors.white,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 30,
     fontWeight: '800',
-    marginTop: 16,
+    marginBottom: 8,
   },
   subtitle: {
     color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 14,
-    maxWidth: 340,
-  },
-  form: {
-    marginTop: 28,
-    gap: 12,
-  },
-  label: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
+    lineHeight: 22,
+    marginBottom: 18,
   },
   input: {
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.surfaceSoft,
     color: colors.white,
-    paddingHorizontal: 14,
-  },
-  primaryButton: {
-    marginTop: 12,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '800',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    fontSize: 16,
   },
 });
