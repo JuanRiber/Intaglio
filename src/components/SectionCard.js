@@ -1,21 +1,34 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { palette, radii, shadowCard } from '../theme/palette';
 
-/**
- * SectionCard encapsula seções de conteúdo com uma aparência de cartão.
- * Facilita a padronização do layout em diferentes telas.
- */
-export default function SectionCard({ children, style }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export default function SectionCard({ children, style, tone = 'paper' }) {
+  return (
+    <View style={[
+      styles.card,
+      tone === 'dark' ? styles.dark : styles.paper,
+      style
+    ]}>
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1f1f1f',
-    borderRadius: 12,
+    borderRadius: radii.lg,
     padding: 16,
-    marginBottom: 16,
-    borderColor: '#2d2d2d',
-    borderWidth: 1
+    marginBottom: 16
+  },
+  paper: {
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    ...shadowCard
+  },
+  dark: {
+    backgroundColor: palette.ink,
+    borderWidth: 1,
+    borderColor: '#242426'
   }
 });

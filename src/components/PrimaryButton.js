@@ -1,45 +1,66 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet } from 'react-native';
+import { palette, radii, shadowGold } from '../theme/palette';
 
-/**
- * PrimaryButton é um componente reutilizável para botões principais. Ele
- * aplica estilo consistente e torna a intenção de toque mais clara.
- */
-export default function PrimaryButton({ title, onPress, style, disabled }) {
+export default function PrimaryButton({ title, onPress, style, disabled, textStyle, variant = 'primary' }) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
-        styles.button,
+        styles.base,
+        variant === 'secondary' ? styles.secondary : styles.primary,
         pressed && !disabled && styles.pressed,
         disabled && styles.disabled,
         style
       ]}
     >
-      <Text style={styles.text}>{title}</Text>
+      <Text style={[
+        styles.text,
+        variant === 'secondary' ? styles.secondaryText : styles.primaryText,
+        textStyle
+      ]}>
+        {title}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    backgroundColor: '#006aff',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  base: {
+    minHeight: 52,
+    borderRadius: radii.md,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 20
   },
-  pressed: {
-    opacity: 0.8
+  primary: {
+    backgroundColor: palette.gold,
+    borderWidth: 1,
+    borderColor: '#B88624',
+    ...shadowGold
   },
-  disabled: {
-    backgroundColor: '#444444'
+  secondary: {
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line
   },
   text: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600'
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3
+  },
+  primaryText: {
+    color: palette.ink
+  },
+  secondaryText: {
+    color: palette.text
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.995 }]
+  },
+  disabled: {
+    opacity: 0.5
   }
 });

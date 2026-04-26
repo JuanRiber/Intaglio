@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import PrimaryButton from '../../components/PrimaryButton';
+import SectionCard from '../../components/SectionCard';
 import { useAuth } from '../../context/AuthContext';
+import { palette, radii } from '../../theme/palette';
 
-/**
- * OnboardingScreen apresenta rapidamente o propósito do Nexo em três passos.
- * O usuário pode avançar entre as telas ou pular diretamente para iniciar.
- */
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
   const [step, setStep] = useState(0);
@@ -14,58 +12,50 @@ export default function OnboardingScreen() {
   const screens = [
     {
       title: 'Organize seus serviços',
-      description: 'Registre todos os seus atendimentos em um único lugar e nunca perca o controle.'
+      description: 'Registre atendimentos, acompanhe status e evite perder o ritmo do trabalho.'
     },
     {
       title: 'Envie orçamentos',
-      description: 'Crie orçamentos profissionais e compartilhe rapidamente com seus clientes.'
+      description: 'Monte valores com clareza e compartilhe tudo com poucos toques.'
     },
     {
-      title: 'Acompanhe o faturamento',
-      description: 'Veja quanto você ganhou no mês e tome decisões melhores para seu negócio.'
+      title: 'Acompanhe seu faturamento',
+      description: 'Veja o que entrou no mês e enxergue seu negócio com mais controle.'
     }
   ];
 
-  const handleNext = () => {
-    if (step < screens.length - 1) {
-      setStep((prev) => prev + 1);
-    } else {
-      completeOnboarding();
-    }
-  };
-
-  const handleSkip = () => {
-    completeOnboarding();
-  };
-
-  const { title, description } = screens[step];
   const isLast = step === screens.length - 1;
+  const handleNext = () => isLast ? completeOnboarding() : setStep((prev) => prev + 1);
 
   return (
     <View style={styles.container}>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-      </View>
-      <View style={styles.footer}>
-        <View style={styles.indicatorContainer}>
-          {screens.map((_, idx) => (
-            <View
-              key={idx}
-              style={[styles.dot, idx === step ? styles.dotActive : styles.dotInactive]}
-            />
-          ))}
-        </View>
-        {isLast ? (
-          <PrimaryButton title="Começar" onPress={handleNext} />
-        ) : (
-          <PrimaryButton title="Próximo" onPress={handleNext} />
-        )}
+      <StatusBar barStyle="light-content" />
+      <View style={styles.top}>
+        <Text style={styles.brand}>Nexo</Text>
         {!isLast && (
-          <TouchableOpacity onPress={handleSkip} style={{ marginTop: 12 }}>
+          <TouchableOpacity onPress={completeOnboarding}>
             <Text style={styles.skip}>Pular</Text>
           </TouchableOpacity>
         )}
+      </View>
+
+      <View style={styles.hero}>
+        <Text style={styles.title}>{screens[step].title}</Text>
+        <Text style={styles.description}>{screens[step].description}</Text>
+      </View>
+
+      <SectionCard style={styles.featureCard}>
+        <Text style={styles.featureTitle}>{screens[step].title}</Text>
+        <Text style={styles.featureText}>{screens[step].description}</Text>
+      </SectionCard>
+
+      <View style={styles.footer}>
+        <View style={styles.dots}>
+          {screens.map((_, idx) => (
+            <View key={idx} style={[styles.dot, idx === step && styles.dotActive]} />
+          ))}
+        </View>
+        <PrimaryButton title={isLast ? 'Começar' : 'Próximo'} onPress={handleNext} />
       </View>
     </View>
   );
@@ -74,45 +64,72 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: palette.ink,
     paddingHorizontal: 24,
-    paddingVertical: 32
+    paddingTop: 56,
+    paddingBottom: 28
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 16
-  },
-  description: {
-    fontSize: 16,
-    color: '#cccccc',
-    textAlign: 'center',
-    paddingHorizontal: 12
-  },
-  footer: {
+  top: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center'
   },
-  indicatorContainer: {
+  brand: {
+    color: palette.goldSoft,
+    fontSize: 28,
+    fontWeight: '700'
+  },
+  skip: {
+    color: palette.goldSoft,
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  hero: {
+    flex: 1,
+    justifyContent: 'center'
+  },
+  title: {
+    color: palette.paper,
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '700',
+    marginBottom: 14
+  },
+  description: {
+    color: '#CBC6BC',
+    fontSize: 16,
+    lineHeight: 24
+  },
+  featureCard: {
+    backgroundColor: '#121214',
+    borderColor: '#2A2418'
+  },
+  featureTitle: {
+    color: palette.paper,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  featureText: {
+    color: '#CFC9BE',
+    lineHeight: 22
+  },
+  footer: {},
+  dots: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16
+    marginBottom: 18
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginHorizontal: 4
+    marginHorizontal: 4,
+    backgroundColor: '#4B473F'
   },
   dotActive: {
-    backgroundColor: '#006aff'
-  },
-  dotInactive: {
-    backgroundColor: '#555555'
-  },
-  skip: {
-    color: '#888888',
-    fontSize: 14
+    width: 22,
+    backgroundColor: palette.gold,
+    borderRadius: 999
   }
 });

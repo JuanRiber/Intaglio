@@ -2,12 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useServices } from '../../context/ServicesContext';
 import SectionCard from '../../components/SectionCard';
+import { palette, radii, shadowCard } from '../../theme/palette';
 
-/**
- * FinanceScreen apresenta um resumo financeiro dos serviços pagos. Exibe
- * o faturamento do mês, o total geral e uma lista de serviços pagos com
- * seus respectivos valores.
- */
 export default function FinanceScreen() {
   const { services, summary } = useServices();
   const now = new Date();
@@ -42,22 +38,32 @@ export default function FinanceScreen() {
 
   return (
     <View style={styles.container}>
-      <SectionCard>
-        <Text style={styles.cardTitle}>Faturamento do mês</Text>
-        <Text style={styles.cardValue}>R$ {summary.monthlyRevenue.toFixed(2)}</Text>
-        <Text style={styles.cardSub}>Serviços pagos este mês: {paidThisMonth.length}</Text>
+      <SectionCard tone="dark">
+        <Text style={styles.heroLabel}>Faturamento do mês</Text>
+        <Text style={styles.heroValue}>R$ {summary.monthlyRevenue.toFixed(2)}</Text>
+        <Text style={styles.heroSub}>Recebimentos fechados no período atual</Text>
       </SectionCard>
-      <SectionCard>
-        <Text style={styles.cardTitle}>Faturamento total</Text>
-        <Text style={styles.cardValue}>R$ {totalRevenue.toFixed(2)}</Text>
-        <Text style={styles.cardSub}>Serviços pagos no total: {paidServices.length}</Text>
-      </SectionCard>
-      <Text style={styles.listTitle}>Pagamentos recentes</Text>
+
+      <View style={styles.duoGrid}>
+        <SectionCard style={styles.smallCard}>
+          <Text style={styles.smallLabel}>Serviços pagos</Text>
+          <Text style={styles.smallValue}>{paidThisMonth.length}</Text>
+        </SectionCard>
+        <SectionCard style={styles.smallCard}>
+          <Text style={styles.smallLabel}>Total geral</Text>
+          <Text style={styles.smallValue}>R$ {totalRevenue.toFixed(2)}</Text>
+        </SectionCard>
+      </View>
+
+      <Text style={styles.listTitle}>Recebimentos recentes</Text>
       <FlatList
         data={paidServices}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.paymentItem}>
+            <View style={styles.avatarBox}>
+              <Text style={styles.avatarText}>{item.client?.slice(0,1)?.toUpperCase()}</Text>
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.paymentClient}>{item.client}</Text>
               <Text style={styles.paymentEquipment}>{item.equipment}</Text>
@@ -68,65 +74,46 @@ export default function FinanceScreen() {
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhum serviço pago.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhum serviço pago ainda.</Text>}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    padding: 16
-  },
-  cardTitle: {
-    fontSize: 16,
-    color: '#aaaaaa'
-  },
-  cardValue: {
-    fontSize: 28,
-    color: '#27ae60',
-    fontWeight: '700'
-  },
-  cardSub: {
-    fontSize: 12,
-    color: '#888888',
-    marginTop: 4
-  },
-  listTitle: {
-    fontSize: 18,
-    color: '#ffffff',
-    fontWeight: '600',
-    marginVertical: 12
-  },
+  container: { flex: 1, backgroundColor: palette.snow, padding: 16 },
+  heroLabel: { color: '#D7D0C2', fontSize: 14, marginBottom: 6 },
+  heroValue: { color: palette.paper, fontSize: 30, fontWeight: '700' },
+  heroSub: { color: palette.goldSoft, fontSize: 12, marginTop: 6 },
+  duoGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+  smallCard: { width: '48%' },
+  smallLabel: { color: palette.textSoft, fontSize: 13 },
+  smallValue: { color: palette.text, fontSize: 24, fontWeight: '700', marginTop: 6 },
+  listTitle: { color: palette.text, fontSize: 18, fontWeight: '700', marginBottom: 10 },
   paymentItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222222'
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    borderRadius: radii.md,
+    padding: 14,
+    marginBottom: 10,
+    ...shadowCard
   },
-  paymentClient: {
-    fontSize: 16,
-    color: '#ffffff'
+  avatarBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: palette.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12
   },
-  paymentEquipment: {
-    fontSize: 14,
-    color: '#888888'
-  },
-  paymentTotal: {
-    fontSize: 16,
-    color: '#27ae60',
-    fontWeight: '600'
-  },
-  paymentDate: {
-    fontSize: 12,
-    color: '#888888'
-  },
-  empty: {
-    color: '#777777',
-    textAlign: 'center',
-    marginTop: 24
-  }
+  avatarText: { color: palette.paper, fontWeight: '700' },
+  paymentClient: { fontSize: 15, color: palette.text, fontWeight: '700' },
+  paymentEquipment: { fontSize: 13, color: palette.textSoft, marginTop: 3 },
+  paymentTotal: { fontSize: 15, color: palette.text, fontWeight: '700' },
+  paymentDate: { fontSize: 12, color: palette.textSoft, marginTop: 3 },
+  empty: { color: palette.textSoft, textAlign: 'center', marginTop: 24 }
 });

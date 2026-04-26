@@ -11,11 +11,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
+import { palette, radii } from '../../theme/palette';
 
-/**
- * ForgotPasswordScreen permite que o usuário solicite a recuperação de sua
- * senha. A lógica de envio é simulada, mas fornece feedback amigável.
- */
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation();
   const { requestPasswordReset } = useAuth();
@@ -28,42 +25,38 @@ export default function ForgotPasswordScreen() {
     setError('');
     setMessage('');
     if (!email.trim()) {
-      setError('Informe seu email.');
+      setError('Informe seu e-mail.');
       return;
     }
     setLoading(true);
     const result = await requestPasswordReset({ email });
     setLoading(false);
-    if (!result.success) {
-      setError(result.message);
-    } else {
-      setMessage(result.message);
-    }
+    if (!result.success) setError(result.message);
+    else setMessage(result.message);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.innerContainer}>
-        <Text style={styles.title}>Recuperar senha</Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.hero}>
+        <Text style={styles.brand}>Nexo</Text>
+        <Text style={styles.heroTitle}>Recupere sua senha</Text>
+        <Text style={styles.heroText}>Informe seu e-mail cadastrado para receber o link.</Text>
+      </View>
+
+      <View style={styles.card}>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {message ? <Text style={styles.message}>{message}</Text> : null}
         <TextInput
           style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#777777"
+          placeholder="Digite seu e-mail"
+          placeholderTextColor="#8E897E"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
         />
-        <PrimaryButton
-          title={loading ? 'Enviando...' : 'Enviar link de recuperação'}
-          onPress={handleSubmit}
-        />
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 12 }}>
+        <PrimaryButton title={loading ? 'Enviando...' : 'Enviar link'} onPress={handleSubmit} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 14 }}>
           <Text style={styles.link}>Voltar</Text>
         </TouchableOpacity>
       </View>
@@ -74,41 +67,58 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
-    justifyContent: 'center',
-    paddingHorizontal: 24
+    backgroundColor: palette.snow,
+    paddingHorizontal: 24,
+    justifyContent: 'center'
   },
-  innerContainer: {
-    backgroundColor: '#1f1f1f',
-    padding: 24,
-    borderRadius: 12
+  hero: {
+    marginBottom: 20
   },
-  title: {
-    fontSize: 24,
+  brand: {
+    color: palette.gold,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 16
+    marginBottom: 8
+  },
+  heroTitle: {
+    color: palette.text,
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  heroText: {
+    color: palette.textSoft,
+    fontSize: 15,
+    lineHeight: 22
+  },
+  card: {
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    borderRadius: radii.lg,
+    padding: 18
   },
   input: {
     borderWidth: 1,
-    borderColor: '#444444',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#ffffff',
+    borderColor: palette.line,
+    backgroundColor: '#FCFBF8',
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: palette.text,
     marginBottom: 12
   },
   error: {
-    color: '#e74c3c',
-    marginBottom: 8
+    color: palette.danger,
+    marginBottom: 10
   },
   message: {
-    color: '#2ecc71',
-    marginBottom: 8
+    color: palette.success,
+    marginBottom: 10
   },
   link: {
-    color: '#006aff',
-    textAlign: 'center'
+    textAlign: 'center',
+    color: palette.gold,
+    fontWeight: '600'
   }
 });

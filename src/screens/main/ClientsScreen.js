@@ -1,25 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TextInput, FlatList } from 'react-native';
 import { useServices } from '../../context/ServicesContext';
+import { palette, radii, shadowCard } from '../../theme/palette';
 
-/**
- * ClientsScreen lista clientes com base nos serviços cadastrados. Exibe
- * quantos serviços cada cliente possui e permite busca simples.
- */
 export default function ClientsScreen() {
-  const navigation = useNavigation();
   const { services } = useServices();
   const [query, setQuery] = useState('');
 
-  // Agrupa serviços por cliente
   const clients = useMemo(() => {
     const map = new Map();
     services.forEach((svc) => {
       const key = `${svc.clientName}|${svc.phone || ''}`;
-      if (!map.has(key)) {
-        map.set(key, { name: svc.clientName, phone: svc.phone, count: 0 });
-      }
+      if (!map.has(key)) map.set(key, { name: svc.clientName, phone: svc.phone, count: 0 });
       map.get(key).count += 1;
     });
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -27,31 +19,32 @@ export default function ClientsScreen() {
 
   const filtered = clients.filter((cl) => cl.name.toLowerCase().includes(query.toLowerCase()));
 
-  const renderClient = ({ item }) => (
-    <View style={styles.clientItem}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.clientName}>{item.name}</Text>
-        {item.phone ? <Text style={styles.clientPhone}>{item.phone}</Text> : null}
-      </View>
-      <View style={styles.clientCountBadge}>
-        <Text style={styles.clientCountText}>{item.count} serviço{item.count > 1 ? 's' : ''}</Text>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
         placeholder="Buscar cliente..."
-        placeholderTextColor="#777777"
+        placeholderTextColor="#8E897E"
         value={query}
         onChangeText={setQuery}
       />
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.name + item.phone}
-        renderItem={renderClient}
+        renderItem={({ item }) => (
+          <View style={styles.clientItem}>
+            <View style={styles.avatarBox}>
+              <Text style={styles.avatarText}>{item.name?.slice(0,1)?.toUpperCase()}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.clientName}>{item.name}</Text>
+              {item.phone ? <Text style={styles.clientPhone}>{item.phone}</Text> : null}
+            </View>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.count}</Text>
+            </View>
+          </View>
+        )}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum cliente encontrado.</Text>}
       />
     </View>
@@ -59,51 +52,41 @@ export default function ClientsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    padding: 16
-  },
+  container: { flex: 1, backgroundColor: palette.snow, padding: 16 },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#444444',
-    backgroundColor: '#1f1f1f',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#ffffff',
+    borderColor: palette.line,
+    backgroundColor: palette.paper,
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: palette.text,
     marginBottom: 12
   },
   clientItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222222'
+    padding: 14,
+    borderRadius: radii.md,
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    marginBottom: 10,
+    ...shadowCard
   },
-  clientName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff'
-  },
-  clientPhone: {
-    fontSize: 14,
-    color: '#888888'
-  },
-  clientCountBadge: {
-    backgroundColor: '#006aff',
+  avatarBox: {
+    width: 42,
+    height: 42,
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4
+    backgroundColor: palette.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12
   },
-  clientCountText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600'
-  },
-  empty: {
-    color: '#777777',
-    textAlign: 'center',
-    marginTop: 24
-  }
+  avatarText: { color: palette.paper, fontWeight: '700' },
+  clientName: { fontSize: 15, fontWeight: '700', color: palette.text },
+  clientPhone: { fontSize: 13, color: palette.textSoft, marginTop: 3 },
+  badge: { backgroundColor: palette.gold, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  badgeText: { color: palette.ink, fontWeight: '700', fontSize: 12 },
+  empty: { color: palette.textSoft, textAlign: 'center', marginTop: 24 }
 });

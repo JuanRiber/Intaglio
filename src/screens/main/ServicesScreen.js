@@ -1,22 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  FlatList,
-  TouchableOpacity
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useServices, SERVICE_STATUSES } from '../../context/ServicesContext';
-import PrimaryButton from '../../components/PrimaryButton';
+import { palette, radii, shadowCard } from '../../theme/palette';
 
-/**
- * ServicesScreen lista todos os serviços cadastrados, permitindo busca
- * textual e filtro por status. Cada item pode ser selecionado para
- * visualizar detalhes. Um botão fixo facilita a criação de novos
- * serviços.
- */
 export default function ServicesScreen() {
   const navigation = useNavigation();
   const { services } = useServices();
@@ -24,31 +11,33 @@ export default function ServicesScreen() {
   const [selectedStatus, setSelectedStatus] = useState('TODOS');
 
   const filteredServices = useMemo(() => {
-    return services.filter((svc) => {
-      if (selectedStatus !== 'TODOS' && svc.status !== selectedStatus) {
-        return false;
-      }
-      const q = query.toLowerCase();
-      return (
-        svc.clientName.toLowerCase().includes(q) ||
-        svc.equipment.toLowerCase().includes(q) ||
-        svc.problem.toLowerCase().includes(q)
-      );
-    });
+    return services
+      .filter((svc) => selectedStatus === 'TODOS' || svc.status === selectedStatus)
+      .filter((svc) => {
+        const q = query.toLowerCase();
+        return (
+          svc.clientName.toLowerCase().includes(q) ||
+          svc.equipment.toLowerCase().includes(q) ||
+          svc.problem.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [services, query, selectedStatus]);
 
   const renderService = ({ item }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() =>
-        navigation.navigate('ServiceDetail', {
-          serviceId: item.id
-        })
-      }
+      onPress={() => navigation.navigate('ServiceDetail', { serviceId: item.id })}
     >
+      <View style={styles.avatarBox}>
+        <Text style={styles.avatarText}>{item.clientName?.slice(0, 1)?.toUpperCase() || 'N'}</Text>
+      </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.itemClient}>{item.clientName}</Text>
-        <Text style={styles.itemEquipment}>{item.equipment}</Text>
+        <Text style={styles.itemClient}>{item.equipment}</Text>
+        <Text style={styles.itemSub}>{item.clientName}</Text>
+        <Text style={styles.itemPrice}>
+          R$ {(item.parts.reduce((sum, p) => sum + (Number(p.price) || 0), 0) + Number(item.labourCost || 0)).toFixed(2)}
+        </Text>
       </View>
       <View style={styles.itemStatus(item.status)}>
         <Text style={styles.itemStatusText}>{SERVICE_STATUSES[item.status].label}</Text>
@@ -58,15 +47,14 @@ export default function ServicesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Buscar serviço..."
-          placeholderTextColor="#777777"
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-        />
-      </View>
+      <TextInput
+        placeholder="Buscar serviços..."
+        placeholderTextColor="#8E897E"
+        style={styles.searchInput}
+        value={query}
+        onChangeText={setQuery}
+      />
+
       <View style={styles.filterRow}>
         {['TODOS', ...Object.keys(SERVICE_STATUSES)].map((statusKey) => {
           const isActive = selectedStatus === statusKey;
@@ -74,111 +62,85 @@ export default function ServicesScreen() {
             <TouchableOpacity
               key={statusKey}
               onPress={() => setSelectedStatus(statusKey)}
-              style={isActive ? styles.filterButtonActive : styles.filterButton}
+              style={[styles.filterButton, isActive && styles.filterButtonActive]}
             >
-              <Text style={isActive ? styles.filterTextActive : styles.filterText}>
+              <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
                 {statusKey === 'TODOS' ? 'Todos' : SERVICE_STATUSES[statusKey].label}
               </Text>
             </TouchableOpacity>
           );
         })}
       </View>
+
       <FlatList
         data={filteredServices}
         keyExtractor={(item) => item.id}
         renderItem={renderService}
-        style={{ flex: 1 }}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum serviço encontrado.</Text>}
-      />
-      <PrimaryButton
-        title="Adicionar"
-        onPress={() => navigation.navigate('NewService')}
-        style={styles.addButton}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    padding: 16
-  },
-  searchContainer: {
-    marginBottom: 8
-  },
+  container: { flex: 1, backgroundColor: palette.snow, padding: 16 },
   searchInput: {
     borderWidth: 1,
-    borderColor: '#444444',
-    backgroundColor: '#1f1f1f',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#ffffff'
+    borderColor: palette.line,
+    backgroundColor: palette.paper,
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: palette.text,
+    marginBottom: 12
   },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 8
-  },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
   filterButton: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#2a2a2a',
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
     marginRight: 8,
     marginBottom: 8
   },
   filterButtonActive: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#006aff',
-    marginRight: 8,
-    marginBottom: 8
+    backgroundColor: palette.gold,
+    borderColor: '#B88624'
   },
-  filterText: {
-    color: '#cccccc',
-    fontSize: 12
-  },
-  filterTextActive: {
-    color: '#ffffff',
-    fontSize: 12
-  },
+  filterText: { color: palette.textSoft, fontSize: 12, fontWeight: '600' },
+  filterTextActive: { color: palette.ink },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222222'
+    padding: 14,
+    borderRadius: radii.md,
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    marginBottom: 10,
+    ...shadowCard
   },
-  itemClient: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600'
+  avatarBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: palette.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12
   },
-  itemEquipment: {
-    color: '#888888',
-    fontSize: 14
-  },
+  avatarText: { color: palette.paper, fontWeight: '700' },
+  itemClient: { color: palette.text, fontSize: 15, fontWeight: '700' },
+  itemSub: { color: palette.textSoft, fontSize: 13, marginTop: 3 },
+  itemPrice: { color: palette.text, fontSize: 13, marginTop: 6, fontWeight: '600' },
   itemStatus: (status) => ({
-    backgroundColor: SERVICE_STATUSES[status].color + '20',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6
+    backgroundColor: SERVICE_STATUSES[status].color + '22',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5
   }),
-  itemStatusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff'
-  },
-  empty: {
-    color: '#777777',
-    textAlign: 'center',
-    marginTop: 24
-  },
-  addButton: {
-    marginTop: 12
-  }
+  itemStatusText: { color: palette.text, fontSize: 11, fontWeight: '700' },
+  empty: { color: palette.textSoft, textAlign: 'center', marginTop: 24 }
 });

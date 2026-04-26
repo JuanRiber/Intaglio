@@ -1,95 +1,93 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useProfile } from '../../context/ProfileContext';
 import { useAuth } from '../../context/AuthContext';
+import SectionCard from '../../components/SectionCard';
 import PrimaryButton from '../../components/PrimaryButton';
+import { palette, radii } from '../../theme/palette';
 
-/**
- * MoreScreen reúne ações secundárias como visualizar e editar o perfil
- * profissional, acessar configurações e sair da aplicação. Exibe dados
- * básicos do usuário e uma mensagem de agradecimento.
- */
 export default function MoreScreen() {
   const navigation = useNavigation();
   const { profile, isProfileComplete } = useProfile();
-  const { logout } = useAuth();
-
-  const handleEditProfile = () => {
-    // Navega para a tela de completar perfil novamente
-    navigation.navigate('CompleteProfile');
-  };
+  const { logout, currentUser } = useAuth();
 
   return (
     <View style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Perfil</Text>
-        {isProfileComplete && profile ? (
-          <View>
-            <Text style={styles.itemLabel}>Nome:</Text>
-            <Text style={styles.itemValue}>{profile.name}</Text>
-            <Text style={styles.itemLabel}>Negócio:</Text>
-            <Text style={styles.itemValue}>{profile.businessName}</Text>
-            <Text style={styles.itemLabel}>Especialidade:</Text>
-            <Text style={styles.itemValue}>{profile.specialty}</Text>
-            <Text style={styles.itemLabel}>WhatsApp:</Text>
-            <Text style={styles.itemValue}>{profile.whatsapp}</Text>
-            <Text style={styles.itemLabel}>Cidade:</Text>
-            <Text style={styles.itemValue}>{profile.city}</Text>
-            {profile.paymentMethod ? (
-              <>
-                <Text style={styles.itemLabel}>Forma de cobrança:</Text>
-                <Text style={styles.itemValue}>{profile.paymentMethod}</Text>
-              </>
-            ) : null}
+      <SectionCard style={styles.profileCard}>
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{(currentUser?.nome || profile?.name || 'N').slice(0, 1).toUpperCase()}</Text>
           </View>
-        ) : (
-          <Text style={{ color: '#777777' }}>Perfil incompleto.</Text>
-        )}
-        <PrimaryButton
-          title={isProfileComplete ? 'Editar perfil' : 'Completar perfil'}
-          onPress={handleEditProfile}
-          style={{ marginTop: 12 }}
-        />
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Configurações</Text>
-        <Text style={styles.itemLabel}>Versão do app</Text>
-        <Text style={styles.itemValue}>0.1.5</Text>
-      </View>
-      <View style={styles.section}>
-        <PrimaryButton
-          title="Sair"
-          onPress={logout}
-          style={{ backgroundColor: '#e74c3c' }}
-        />
-      </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.profileName}>{profile?.name || currentUser?.nome || 'Seu perfil'}</Text>
+            <Text style={styles.profileEmail}>{currentUser?.email || 'conta@nexo.app'}</Text>
+          </View>
+        </View>
+      </SectionCard>
+
+      <SectionCard>
+        <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('CompleteProfile')}>
+          <Text style={styles.rowText}>{isProfileComplete ? 'Dados da conta' : 'Completar perfil'}</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.row}>
+          <Text style={styles.rowText}>Método de recebimento</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.row}>
+          <Text style={styles.rowText}>Mensagem automática</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.row}>
+          <Text style={styles.rowText}>Notificações</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]}>
+          <Text style={styles.rowText}>Suporte</Text>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+      </SectionCard>
+
+      <PrimaryButton
+        title="Sair da conta"
+        onPress={logout}
+        variant="secondary"
+        style={styles.logoutButton}
+        textStyle={{ color: palette.danger }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    padding: 16
+  container: { flex: 1, backgroundColor: palette.snow, padding: 16 },
+  profileCard: { padding: 18 },
+  avatarWrap: { flexDirection: 'row', alignItems: 'center' },
+  avatar: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: palette.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14
   },
-  section: {
-    marginBottom: 24
+  avatarText: { color: palette.paper, fontSize: 22, fontWeight: '700' },
+  profileName: { color: palette.text, fontSize: 18, fontWeight: '700' },
+  profileEmail: { color: palette.textSoft, marginTop: 4 },
+  row: {
+    minHeight: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.line,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
   },
-  sectionTitle: {
-    fontSize: 18,
-    color: '#ffffff',
-    fontWeight: '600',
-    marginBottom: 8
-  },
-  itemLabel: {
-    fontSize: 14,
-    color: '#888888'
-  },
-  itemValue: {
-    fontSize: 16,
-    color: '#ffffff',
-    marginBottom: 4
+  rowText: { color: palette.text, fontSize: 15, fontWeight: '600' },
+  chevron: { color: palette.textSoft, fontSize: 20 },
+  logoutButton: {
+    marginTop: 12,
+    borderColor: '#E8CAC2'
   }
 });

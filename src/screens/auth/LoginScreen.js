@@ -11,13 +11,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
+import { palette, radii } from '../../theme/palette';
 
-/**
- * LoginScreen permite que o usuário entre na aplicação usando email e senha.
- * Campos são validados de maneira simples e mensagens de erro são exibidas
- * quando o login falha. O usuário pode navegar para cadastro ou
- * recuperação de senha.
- */
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { login } = useAuth();
@@ -35,45 +30,50 @@ export default function LoginScreen() {
     setLoading(true);
     const result = await login({ email, senha });
     setLoading(false);
-    if (!result.success) {
-      setError(result.message);
-    }
+    if (!result.success) setError(result.message);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.innerContainer}>
-        <Text style={styles.title}>Entrar</Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.hero}>
+        <Text style={styles.brand}>Nexo</Text>
+        <Text style={styles.heroTitle}>Acesse sua conta</Text>
+        <Text style={styles.heroText}>Entre para continuar gerenciando seus serviços.</Text>
+      </View>
+
+      <View style={styles.card}>
         {error ? <Text style={styles.error}>{error}</Text> : null}
+
         <TextInput
           style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#777777"
+          placeholder="Digite seu e-mail"
+          placeholderTextColor="#8E897E"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
         />
+
         <TextInput
           style={styles.input}
-          placeholder="Senha"
-          placeholderTextColor="#777777"
+          placeholder="Digite sua senha"
+          placeholderTextColor="#8E897E"
           secureTextEntry
           value={senha}
           onChangeText={setSenha}
         />
+
         <PrimaryButton title={loading ? 'Entrando...' : 'Entrar'} onPress={handleLogin} />
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ForgotPassword')}
+
+        <PrimaryButton
+          title="Criar conta"
+          onPress={() => navigation.navigate('Register')}
+          variant="secondary"
           style={{ marginTop: 12 }}
-        >
+        />
+
+        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={{ marginTop: 14 }}>
           <Text style={styles.link}>Esqueci minha senha</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')} style={{ marginTop: 12 }}>
-          <Text style={styles.link}>Criar conta</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -83,37 +83,55 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
-    justifyContent: 'center',
-    paddingHorizontal: 24
+    backgroundColor: palette.snow,
+    paddingHorizontal: 24,
+    justifyContent: 'center'
   },
-  innerContainer: {
-    backgroundColor: '#1f1f1f',
-    padding: 24,
-    borderRadius: 12
+  hero: {
+    marginBottom: 24
   },
-  title: {
-    fontSize: 24,
+  brand: {
+    color: palette.gold,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 16
+    marginBottom: 8
+  },
+  heroTitle: {
+    color: palette.text,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  heroText: {
+    color: palette.textSoft,
+    fontSize: 15,
+    lineHeight: 22
+  },
+  card: {
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    borderRadius: radii.lg,
+    padding: 18
   },
   input: {
     borderWidth: 1,
-    borderColor: '#444444',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#ffffff',
+    borderColor: palette.line,
+    backgroundColor: '#FCFBF8',
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: palette.text,
     marginBottom: 12
   },
   error: {
-    color: '#e74c3c',
-    marginBottom: 8
+    color: palette.danger,
+    marginBottom: 10
   },
   link: {
-    color: '#006aff',
-    textAlign: 'center'
+    textAlign: 'center',
+    color: palette.gold,
+    fontWeight: '600'
   }
 });

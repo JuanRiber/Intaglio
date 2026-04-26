@@ -12,12 +12,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
+import { palette, radii } from '../../theme/palette';
 
-/**
- * RegisterScreen permite que um novo usuário crie sua conta localmente.
- * Após o cadastro, o usuário é autenticado automaticamente. Os campos
- * essenciais são validados de forma simples.
- */
 export default function RegisterScreen() {
   const navigation = useNavigation();
   const { register } = useAuth();
@@ -42,62 +38,27 @@ export default function RegisterScreen() {
     setLoading(true);
     const result = await register({ nome, telefone, email, senha });
     setLoading(false);
-    if (!result.success) {
-      setError(result.message || 'Falha ao cadastrar.');
-    }
+    if (!result.success) setError(result.message || 'Falha ao cadastrar.');
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
-        <View style={styles.innerContainer}>
-          <Text style={styles.title}>Criar conta</Text>
+        <View style={styles.hero}>
+          <Text style={styles.brand}>Nexo</Text>
+          <Text style={styles.heroTitle}>Crie sua conta</Text>
+          <Text style={styles.heroText}>Cadastro simples para começar a usar o app.</Text>
+        </View>
+
+        <View style={styles.card}>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TextInput
-            style={styles.input}
-            placeholder="Nome completo"
-            placeholderTextColor="#777777"
-            value={nome}
-            onChangeText={setNome}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Telefone"
-            placeholderTextColor="#777777"
-            keyboardType="phone-pad"
-            value={telefone}
-            onChangeText={setTelefone}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#777777"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            placeholderTextColor="#777777"
-            secureTextEntry
-            value={senha}
-            onChangeText={setSenha}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar senha"
-            placeholderTextColor="#777777"
-            secureTextEntry
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-          />
-          <PrimaryButton title={loading ? 'Criando...' : 'Cadastrar'} onPress={handleRegister} />
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 12 }}>
+          <TextInput style={styles.input} placeholder="Seu nome" placeholderTextColor="#8E897E" value={nome} onChangeText={setNome} />
+          <TextInput style={styles.input} placeholder="Seu telefone" placeholderTextColor="#8E897E" keyboardType="phone-pad" value={telefone} onChangeText={setTelefone} />
+          <TextInput style={styles.input} placeholder="Seu e-mail" placeholderTextColor="#8E897E" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+          <TextInput style={styles.input} placeholder="Senha" placeholderTextColor="#8E897E" secureTextEntry value={senha} onChangeText={setSenha} />
+          <TextInput style={styles.input} placeholder="Confirmar senha" placeholderTextColor="#8E897E" secureTextEntry value={confirmarSenha} onChangeText={setConfirmarSenha} />
+          <PrimaryButton title={loading ? 'Cadastrando...' : 'Cadastrar'} onPress={handleRegister} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 14 }}>
             <Text style={styles.link}>Voltar ao login</Text>
           </TouchableOpacity>
         </View>
@@ -109,36 +70,53 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: palette.snow,
     paddingHorizontal: 24
   },
-  innerContainer: {
-    backgroundColor: '#1f1f1f',
-    padding: 24,
-    borderRadius: 12
+  hero: {
+    marginBottom: 20
   },
-  title: {
-    fontSize: 24,
+  brand: {
+    color: palette.gold,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 16
+    marginBottom: 8
+  },
+  heroTitle: {
+    color: palette.text,
+    fontSize: 32,
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  heroText: {
+    color: palette.textSoft,
+    fontSize: 15,
+    lineHeight: 22
+  },
+  card: {
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    borderRadius: radii.lg,
+    padding: 18
   },
   input: {
     borderWidth: 1,
-    borderColor: '#444444',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#ffffff',
+    borderColor: palette.line,
+    backgroundColor: '#FCFBF8',
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: palette.text,
     marginBottom: 12
   },
   error: {
-    color: '#e74c3c',
-    marginBottom: 8
+    color: palette.danger,
+    marginBottom: 10
   },
   link: {
-    color: '#006aff',
-    textAlign: 'center'
+    textAlign: 'center',
+    color: palette.gold,
+    fontWeight: '600'
   }
 });

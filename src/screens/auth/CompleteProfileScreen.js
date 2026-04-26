@@ -10,21 +10,16 @@ import {
 } from 'react-native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useProfile } from '../../context/ProfileContext';
+import { palette, radii } from '../../theme/palette';
 
-/**
- * CompleteProfileScreen coleta informações profissionais adicionais após o
- * login. O usuário deve fornecer dados essenciais para que o app possa
- * personalizar a experiência. Após salvar, a tela é fechada via
- * detecção automática do ProfileContext.
- */
 export default function CompleteProfileScreen() {
-  const { saveProfile } = useProfile();
-  const [name, setName] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [specialty, setSpecialty] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [city, setCity] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const { saveProfile, profile } = useProfile();
+  const [name, setName] = useState(profile?.name || '');
+  const [businessName, setBusinessName] = useState(profile?.businessName || '');
+  const [specialty, setSpecialty] = useState(profile?.specialty || '');
+  const [whatsapp, setWhatsapp] = useState(profile?.whatsapp || '');
+  const [city, setCity] = useState(profile?.city || '');
+  const [paymentMethod, setPaymentMethod] = useState(profile?.paymentMethod || '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -40,58 +35,23 @@ export default function CompleteProfileScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
-        <View style={styles.innerContainer}>
-          <Text style={styles.title}>Completar perfil</Text>
+        <View style={styles.hero}>
+          <Text style={styles.brand}>Nexo</Text>
+          <Text style={styles.heroTitle}>Completar perfil profissional</Text>
+          <Text style={styles.heroText}>Finalize seu perfil para deixar o app com a sua cara.</Text>
+        </View>
+
+        <View style={styles.card}>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TextInput
-            style={styles.input}
-            placeholder="Seu nome"
-            placeholderTextColor="#777777"
-            value={name}
-            onChangeText={setName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Nome do negócio"
-            placeholderTextColor="#777777"
-            value={businessName}
-            onChangeText={setBusinessName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Especialidade (ex. manutenção)"
-            placeholderTextColor="#777777"
-            value={specialty}
-            onChangeText={setSpecialty}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="WhatsApp"
-            placeholderTextColor="#777777"
-            keyboardType="phone-pad"
-            value={whatsapp}
-            onChangeText={setWhatsapp}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Cidade"
-            placeholderTextColor="#777777"
-            value={city}
-            onChangeText={setCity}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Forma de cobrança padrão (opcional)"
-            placeholderTextColor="#777777"
-            value={paymentMethod}
-            onChangeText={setPaymentMethod}
-          />
-          <PrimaryButton title={loading ? 'Salvando...' : 'Salvar'} onPress={handleSave} />
+          <TextInput style={styles.input} placeholder="Nome do profissional" placeholderTextColor="#8E897E" value={name} onChangeText={setName} />
+          <TextInput style={styles.input} placeholder="Nome do negócio" placeholderTextColor="#8E897E" value={businessName} onChangeText={setBusinessName} />
+          <TextInput style={styles.input} placeholder="Especialidade" placeholderTextColor="#8E897E" value={specialty} onChangeText={setSpecialty} />
+          <TextInput style={styles.input} placeholder="WhatsApp" placeholderTextColor="#8E897E" keyboardType="phone-pad" value={whatsapp} onChangeText={setWhatsapp} />
+          <TextInput style={styles.input} placeholder="Cidade" placeholderTextColor="#8E897E" value={city} onChangeText={setCity} />
+          <TextInput style={styles.input} placeholder="Forma de cobrança padrão" placeholderTextColor="#8E897E" value={paymentMethod} onChangeText={setPaymentMethod} />
+          <PrimaryButton title={loading ? 'Salvando...' : 'Concluir'} onPress={handleSave} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -101,32 +61,49 @@ export default function CompleteProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: palette.snow,
     paddingHorizontal: 24
   },
-  innerContainer: {
-    backgroundColor: '#1f1f1f',
-    padding: 24,
-    borderRadius: 12
+  hero: {
+    marginBottom: 20
   },
-  title: {
-    fontSize: 24,
+  brand: {
+    color: palette.gold,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 16
+    marginBottom: 8
+  },
+  heroTitle: {
+    color: palette.text,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  heroText: {
+    color: palette.textSoft,
+    fontSize: 15,
+    lineHeight: 22
+  },
+  card: {
+    backgroundColor: palette.paper,
+    borderWidth: 1,
+    borderColor: palette.line,
+    borderRadius: radii.lg,
+    padding: 18
   },
   input: {
     borderWidth: 1,
-    borderColor: '#444444',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#ffffff',
+    borderColor: palette.line,
+    backgroundColor: '#FCFBF8',
+    borderRadius: radii.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: palette.text,
     marginBottom: 12
   },
   error: {
-    color: '#e74c3c',
-    marginBottom: 8
+    color: palette.danger,
+    marginBottom: 10
   }
 });
