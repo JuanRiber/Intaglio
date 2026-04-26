@@ -1,57 +1,72 @@
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../constants/theme';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import PrimaryButton from '../../components/PrimaryButton';
-import SectionCard from '../../components/SectionCard';
 import { useAuth } from '../../context/AuthContext';
 
-const slidesFreya = [
-  {
-    title: 'Organize seus serviços',
-    description: 'Centralize cliente, equipamento, peças, mão de obra e status em um fluxo simples.',
-  },
-  {
-    title: 'Envie orçamentos',
-    description: 'Monte o resumo do serviço e compartilhe pelo WhatsApp sem sair da rotina.',
-  },
-  {
-    title: 'Acompanhe seu faturamento',
-    description: 'Veja o que está ativo, pago e pendente para decidir o próximo passo com clareza.',
-  },
-];
-
+/**
+ * OnboardingScreen apresenta rapidamente o propósito do Nexo em três passos.
+ * O usuário pode avançar entre as telas ou pular diretamente para iniciar.
+ */
 export default function OnboardingScreen() {
-  const [activeIndex, setActiveIndex] = useState(0);
   const { completeOnboarding } = useAuth();
+  const [step, setStep] = useState(0);
 
-  const activeSlide = useMemo(() => slidesFreya[activeIndex], [activeIndex]);
-  const isLastSlide = activeIndex === slidesFreya.length - 1;
-
-  function handleContinue() {
-    if (isLastSlide) {
-      completeOnboarding();
-      return;
+  const screens = [
+    {
+      title: 'Organize seus serviços',
+      description: 'Registre todos os seus atendimentos em um único lugar e nunca perca o controle.'
+    },
+    {
+      title: 'Envie orçamentos',
+      description: 'Crie orçamentos profissionais e compartilhe rapidamente com seus clientes.'
+    },
+    {
+      title: 'Acompanhe o faturamento',
+      description: 'Veja quanto você ganhou no mês e tome decisões melhores para seu negócio.'
     }
-    setActiveIndex((current) => current + 1);
-  }
+  ];
+
+  const handleNext = () => {
+    if (step < screens.length - 1) {
+      setStep((prev) => prev + 1);
+    } else {
+      completeOnboarding();
+    }
+  };
+
+  const handleSkip = () => {
+    completeOnboarding();
+  };
+
+  const { title, description } = screens[step];
+  const isLast = step === screens.length - 1;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.eyebrow}>Nexo em 3 passos</Text>
-      <SectionCard style={styles.heroCard}>
-        <View style={styles.illustrationHalo} />
-        <Text style={styles.title}>{activeSlide.title}</Text>
-        <Text style={styles.description}>{activeSlide.description}</Text>
-      </SectionCard>
-
-      <View style={styles.dotsRow}>
-        {slidesFreya.map((_, index) => (
-          <View key={String(index)} style={[styles.dot, index === activeIndex && styles.dotActive]} />
-        ))}
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.description}>{description}</Text>
       </View>
-
-      <PrimaryButton label={isLastSlide ? 'Começar' : 'Continuar'} onPress={handleContinue} style={styles.primaryAction} />
-      <PrimaryButton label="Pular" variant="ghost" onPress={completeOnboarding} />
+      <View style={styles.footer}>
+        <View style={styles.indicatorContainer}>
+          {screens.map((_, idx) => (
+            <View
+              key={idx}
+              style={[styles.dot, idx === step ? styles.dotActive : styles.dotInactive]}
+            />
+          ))}
+        </View>
+        {isLast ? (
+          <PrimaryButton title="Começar" onPress={handleNext} />
+        ) : (
+          <PrimaryButton title="Próximo" onPress={handleNext} />
+        )}
+        {!isLast && (
+          <TouchableOpacity onPress={handleSkip} style={{ marginTop: 12 }}>
+            <Text style={styles.skip}>Pular</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -59,58 +74,45 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    padding: 22,
-    justifyContent: 'center',
-  },
-  eyebrow: {
-    color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 14,
-  },
-  heroCard: {
-    minHeight: 300,
-    justifyContent: 'center',
-    marginBottom: 22,
-  },
-  illustrationHalo: {
-    width: 74,
-    height: 74,
-    borderRadius: 24,
-    backgroundColor: colors.surfaceSoft,
-    marginBottom: 20,
+    backgroundColor: '#0f0f0f',
+    paddingHorizontal: 24,
+    paddingVertical: 32
   },
   title: {
-    color: colors.white,
     fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 10,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 16
   },
   description: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    fontSize: 15,
+    fontSize: 16,
+    color: '#cccccc',
+    textAlign: 'center',
+    paddingHorizontal: 12
   },
-  dotsRow: {
+  footer: {
+    alignItems: 'center'
+  },
+  indicatorContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: 22,
+    marginBottom: 16
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.border,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4
   },
   dotActive: {
-    backgroundColor: colors.primary,
-    width: 24,
+    backgroundColor: '#006aff'
   },
-  primaryAction: {
-    marginBottom: 12,
+  dotInactive: {
+    backgroundColor: '#555555'
   },
+  skip: {
+    color: '#888888',
+    fontSize: 14
+  }
 });

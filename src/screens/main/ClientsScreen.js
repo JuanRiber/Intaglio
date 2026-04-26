@@ -1,90 +1,109 @@
-import React, { useMemo } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../../constants/theme';
-import SectionCard from '../../components/SectionCard';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useServices } from '../../context/ServicesContext';
-import { formatPhone } from '../../utils/formatters';
 
+/**
+ * ClientsScreen lista clientes com base nos serviços cadastrados. Exibe
+ * quantos serviços cada cliente possui e permite busca simples.
+ */
 export default function ClientsScreen() {
+  const navigation = useNavigation();
   const { services } = useServices();
+  const [query, setQuery] = useState('');
 
-  const clientRegistryCernunnos = useMemo(() => {
+  // Agrupa serviços por cliente
+  const clients = useMemo(() => {
     const map = new Map();
-
-    services.forEach((service) => {
-      const key = `${service.cliente}-${service.telefone}`;
-      const current = map.get(key) || {
-        nome: service.cliente,
-        telefone: service.telefone,
-        equipamentos: new Set(),
-        quantidade: 0,
-      };
-
-      current.quantidade += 1;
-      if (service.equipamento) {
-        current.equipamentos.add(service.equipamento);
+    services.forEach((svc) => {
+      const key = `${svc.clientName}|${svc.phone || ''}`;
+      if (!map.has(key)) {
+        map.set(key, { name: svc.clientName, phone: svc.phone, count: 0 });
       }
-      map.set(key, current);
+      map.get(key).count += 1;
     });
-
-    return Array.from(map.values()).map((client) => ({
-      ...client,
-      equipamentos: Array.from(client.equipamentos),
-    }));
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [services]);
 
-  function openClientWhatsapp(phone) {
-    if (!phone) return;
-    Linking.openURL(`https://wa.me/${phone.replace(/\D/g, '')}`).catch(() => null);
-  }
+  const filtered = clients.filter((cl) => cl.name.toLowerCase().includes(query.toLowerCase()));
+
+  const renderClient = ({ item }) => (
+    <View style={styles.clientItem}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.clientName}>{item.name}</Text>
+        {item.phone ? <Text style={styles.clientPhone}>{item.phone}</Text> : null}
+      </View>
+      <View style={styles.clientCountBadge}>
+        <Text style={styles.clientCountText}>{item.count} serviço{item.count > 1 ? 's' : ''}</Text>
+      </View>
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Clientes</Text>
-      <Text style={styles.subtitle}>Uma base enxuta para saber quem já passou pelo seu fluxo e como voltar neles.</Text>
-
-      {clientRegistryCernunnos.length === 0 ? (
-        <SectionCard>
-          <Text style={styles.emptyTitle}>Nenhum cliente ainda</Text>
-          <Text style={styles.emptyText}>Os clientes aparecem aqui automaticamente conforme você registra serviços.</Text>
-        </SectionCard>
-      ) : (
-        clientRegistryCernunnos.map((client) => (
-          <SectionCard key={`${client.nome}-${client.telefone || client.quantidade}`} style={styles.clientCard}>
-            <View style={styles.clientTopRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.clientName}>{client.nome}</Text>
-                <Text style={styles.clientMeta}>{client.quantidade} serviço(s)</Text>
-              </View>
-              {client.telefone ? (
-                <TouchableOpacity style={styles.whatsappButton} onPress={() => openClientWhatsapp(client.telefone)}>
-                  <Text style={styles.whatsappButtonText}>WhatsApp</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-
-            <Text style={styles.clientPhone}>{client.telefone ? formatPhone(client.telefone) : 'Telefone não informado'}</Text>
-            <Text style={styles.clientEquipments}>Equipamentos: {client.equipamentos.join(', ') || 'Sem dados'}</Text>
-          </SectionCard>
-        ))
-      )}
-    </ScrollView>
+    <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Buscar cliente..."
+        placeholderTextColor="#777777"
+        value={query}
+        onChangeText={setQuery}
+      />
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.name + item.phone}
+        renderItem={renderClient}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhum cliente encontrado.</Text>}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 100 },
-  title: { color: colors.white, fontSize: 28, fontWeight: '800', marginBottom: 6 },
-  subtitle: { color: colors.textMuted, lineHeight: 20, marginBottom: 14 },
-  clientCard: { marginBottom: 12 },
-  clientTopRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 12 },
-  clientName: { color: colors.white, fontWeight: '800', fontSize: 18, marginBottom: 4 },
-  clientMeta: { color: colors.textMuted },
-  whatsappButton: { backgroundColor: colors.success, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
-  whatsappButtonText: { color: colors.white, fontWeight: '700' },
-  clientPhone: { color: colors.white, marginBottom: 6 },
-  clientEquipments: { color: colors.textMuted, lineHeight: 20 },
-  emptyTitle: { color: colors.white, fontWeight: '700', marginBottom: 6 },
-  emptyText: { color: colors.textMuted, lineHeight: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    padding: 16
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#444444',
+    backgroundColor: '#1f1f1f',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: '#ffffff',
+    marginBottom: 12
+  },
+  clientItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222222'
+  },
+  clientName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff'
+  },
+  clientPhone: {
+    fontSize: 14,
+    color: '#888888'
+  },
+  clientCountBadge: {
+    backgroundColor: '#006aff',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4
+  },
+  clientCountText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  empty: {
+    color: '#777777',
+    textAlign: 'center',
+    marginTop: 24
+  }
 });

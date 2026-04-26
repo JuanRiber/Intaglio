@@ -1,24 +1,22 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../constants/theme';
+import { View, Text, Animated, StyleSheet } from 'react-native';
 
+/**
+ * SplashScreen apresenta a marca Nexo enquanto o app inicia. Uma animação
+ * simples de fade fornece um toque de polimento sem atrasar a carga.
+ */
 export default function SplashScreen() {
-  const pulseApollo = useRef(new Animated.Value(0.9)).current;
-
+  const opacity = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseApollo, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(pulseApollo, { toValue: 0.9, duration: 700, useNativeDriver: true }),
-      ])
-    ).start();
-  }, [pulseApollo]);
-
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true
+    }).start();
+  }, [opacity]);
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.logoOrb, { transform: [{ scale: pulseApollo }] }]} />
-      <Text style={styles.brand}>Nexo</Text>
-      <Text style={styles.subtitle}>Organize serviços, orçamento e faturamento sem perder o ritmo.</Text>
+      <Animated.Text style={[styles.logo, { opacity }]}>Nexo</Animated.Text>
     </View>
   );
 }
@@ -26,33 +24,14 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    backgroundColor: '#0f0f0f'
   },
-  logoOrb: {
-    width: 92,
-    height: 92,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    marginBottom: 20,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-  },
-  brand: {
-    color: colors.white,
-    fontSize: 36,
-    fontWeight: '800',
-    marginBottom: 10,
-    letterSpacing: 0.6,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-    fontSize: 14,
-  },
+  logo: {
+    fontSize: 48,
+    color: '#ffffff',
+    fontWeight: 'bold',
+    letterSpacing: 2
+  }
 });

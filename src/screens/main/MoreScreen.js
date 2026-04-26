@@ -1,67 +1,95 @@
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../../constants/theme';
-import SectionCard from '../../components/SectionCard';
-import PrimaryButton from '../../components/PrimaryButton';
-import { useAuth } from '../../context/AuthContext';
+import { View, Text, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useProfile } from '../../context/ProfileContext';
-import { formatPhone } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
+import PrimaryButton from '../../components/PrimaryButton';
 
-export default function MoreScreen({ navigation }) {
+/**
+ * MoreScreen reúne ações secundárias como visualizar e editar o perfil
+ * profissional, acessar configurações e sair da aplicação. Exibe dados
+ * básicos do usuário e uma mensagem de agradecimento.
+ */
+export default function MoreScreen() {
+  const navigation = useNavigation();
+  const { profile, isProfileComplete } = useProfile();
   const { logout } = useAuth();
-  const { profile, clearGaiaProfile } = useProfile();
 
-  async function handleResetProfile() {
-    Alert.alert('Limpar perfil', 'Isso remove apenas o perfil profissional salvo localmente.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Limpar',
-        style: 'destructive',
-        onPress: async () => {
-          await clearGaiaProfile();
-        },
-      },
-    ]);
-  }
+  const handleEditProfile = () => {
+    // Navega para a tela de completar perfil novamente
+    navigation.navigate('CompleteProfile');
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Mais</Text>
-      <Text style={styles.subtitle}>Perfil, atalhos e ações de manutenção do fluxo atual.</Text>
-
-      <SectionCard style={styles.profileCard}>
-        <Text style={styles.sectionTitle}>{profile?.negocioNome || 'Seu negócio'}</Text>
-        <Text style={styles.profileLine}>{profile?.profissionalNome || 'Profissional não definido'}</Text>
-        <Text style={styles.profileLine}>{profile?.especialidade || 'Especialidade não definida'}</Text>
-        <Text style={styles.profileLine}>{profile?.whatsapp ? formatPhone(profile.whatsapp) : 'WhatsApp não informado'}</Text>
-        <Text style={styles.profileLine}>{profile?.cidade || 'Cidade não informada'}</Text>
-      </SectionCard>
-
-      <TouchableOpacity style={styles.menuRow} onPress={() => navigation.getParent()?.navigate('Completar perfil')}>
-        <Text style={styles.menuTitle}>Editar perfil profissional</Text>
-        <Text style={styles.menuText}>Atualize especialidade, cobrança padrão e dados do negócio</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.menuRow} onPress={handleResetProfile}>
-        <Text style={styles.menuTitle}>Limpar perfil salvo</Text>
-        <Text style={styles.menuText}>Remove os dados profissionais locais para reconfigurar depois</Text>
-      </TouchableOpacity>
-
-      <PrimaryButton label="Sair da conta" variant="ghost" onPress={logout} style={styles.logoutButton} />
-    </ScrollView>
+    <View style={styles.container}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Perfil</Text>
+        {isProfileComplete && profile ? (
+          <View>
+            <Text style={styles.itemLabel}>Nome:</Text>
+            <Text style={styles.itemValue}>{profile.name}</Text>
+            <Text style={styles.itemLabel}>Negócio:</Text>
+            <Text style={styles.itemValue}>{profile.businessName}</Text>
+            <Text style={styles.itemLabel}>Especialidade:</Text>
+            <Text style={styles.itemValue}>{profile.specialty}</Text>
+            <Text style={styles.itemLabel}>WhatsApp:</Text>
+            <Text style={styles.itemValue}>{profile.whatsapp}</Text>
+            <Text style={styles.itemLabel}>Cidade:</Text>
+            <Text style={styles.itemValue}>{profile.city}</Text>
+            {profile.paymentMethod ? (
+              <>
+                <Text style={styles.itemLabel}>Forma de cobrança:</Text>
+                <Text style={styles.itemValue}>{profile.paymentMethod}</Text>
+              </>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={{ color: '#777777' }}>Perfil incompleto.</Text>
+        )}
+        <PrimaryButton
+          title={isProfileComplete ? 'Editar perfil' : 'Completar perfil'}
+          onPress={handleEditProfile}
+          style={{ marginTop: 12 }}
+        />
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Configurações</Text>
+        <Text style={styles.itemLabel}>Versão do app</Text>
+        <Text style={styles.itemValue}>0.1.5</Text>
+      </View>
+      <View style={styles.section}>
+        <PrimaryButton
+          title="Sair"
+          onPress={logout}
+          style={{ backgroundColor: '#e74c3c' }}
+        />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 100 },
-  title: { color: colors.white, fontSize: 28, fontWeight: '800', marginBottom: 6 },
-  subtitle: { color: colors.textMuted, lineHeight: 20, marginBottom: 14 },
-  profileCard: { marginBottom: 14 },
-  sectionTitle: { color: colors.white, fontSize: 18, fontWeight: '800', marginBottom: 10 },
-  profileLine: { color: colors.textMuted, marginBottom: 6 },
-  menuRow: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 16, padding: 16, marginBottom: 12 },
-  menuTitle: { color: colors.white, fontWeight: '700', marginBottom: 6 },
-  menuText: { color: colors.textMuted, lineHeight: 20 },
-  logoutButton: { marginTop: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    padding: 16
+  },
+  section: {
+    marginBottom: 24
+  },
+  sectionTitle: {
+    fontSize: 18,
+    color: '#ffffff',
+    fontWeight: '600',
+    marginBottom: 8
+  },
+  itemLabel: {
+    fontSize: 14,
+    color: '#888888'
+  },
+  itemValue: {
+    fontSize: 16,
+    color: '#ffffff',
+    marginBottom: 4
+  }
 });

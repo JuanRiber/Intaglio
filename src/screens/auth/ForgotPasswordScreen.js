@@ -1,71 +1,114 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../../constants/theme';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
-import SectionCard from '../../components/SectionCard';
 import { useAuth } from '../../context/AuthContext';
 
+/**
+ * ForgotPasswordScreen permite que o usuário solicite a recuperação de sua
+ * senha. A lógica de envio é simulada, mas fornece feedback amigável.
+ */
 export default function ForgotPasswordScreen() {
+  const navigation = useNavigation();
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  async function handleRequestReset() {
+  const handleSubmit = async () => {
+    setError('');
+    setMessage('');
     if (!email.trim()) {
-      Alert.alert('Campo obrigatório', 'Informe o email cadastrado.');
+      setError('Informe seu email.');
       return;
     }
-
+    setLoading(true);
     const result = await requestPasswordReset({ email });
-    Alert.alert(result.success ? 'Solicitação enviada' : 'Não foi possível continuar', result.message);
-  }
+    setLoading(false);
+    if (!result.success) {
+      setError(result.message);
+    } else {
+      setMessage(result.message);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recuperar senha</Text>
-      <Text style={styles.subtitle}>Informe o email da conta para receber um retorno simbólico de recuperação.</Text>
-
-      <SectionCard>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={styles.innerContainer}>
+        <Text style={styles.title}>Recuperar senha</Text>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {message ? <Text style={styles.message}>{message}</Text> : null}
         <TextInput
-          value={email}
-          onChangeText={setEmail}
+          style={styles.input}
           placeholder="Email"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor="#777777"
           keyboardType="email-address"
           autoCapitalize="none"
-          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
         />
-        <PrimaryButton label="Enviar link / código" onPress={handleRequestReset} />
-      </SectionCard>
-    </View>
+        <PrimaryButton
+          title={loading ? 'Enviando...' : 'Enviar link de recuperação'}
+          onPress={handleSubmit}
+        />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 12 }}>
+          <Text style={styles.link}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
-    padding: 20,
+    backgroundColor: '#0f0f0f',
     justifyContent: 'center',
+    paddingHorizontal: 24
+  },
+  innerContainer: {
+    backgroundColor: '#1f1f1f',
+    padding: 24,
+    borderRadius: 12
   },
   title: {
-    color: colors.white,
-    fontSize: 30,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    marginBottom: 18,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 16
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceSoft,
-    color: colors.white,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    fontSize: 16,
+    borderColor: '#444444',
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#ffffff',
+    marginBottom: 12
   },
+  error: {
+    color: '#e74c3c',
+    marginBottom: 8
+  },
+  message: {
+    color: '#2ecc71',
+    marginBottom: 8
+  },
+  link: {
+    color: '#006aff',
+    textAlign: 'center'
+  }
 });

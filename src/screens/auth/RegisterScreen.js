@@ -1,81 +1,144 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../../constants/theme';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
-import SectionCard from '../../components/SectionCard';
 import { useAuth } from '../../context/AuthContext';
-import { formatPhone, normalizePhone } from '../../utils/formatters';
 
+/**
+ * RegisterScreen permite que um novo usuário crie sua conta localmente.
+ * Após o cadastro, o usuário é autenticado automaticamente. Os campos
+ * essenciais são validados de forma simples.
+ */
 export default function RegisterScreen() {
+  const navigation = useNavigation();
   const { register } = useAuth();
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  async function handleRegister() {
+  const handleRegister = async () => {
+    setError('');
     if (!nome.trim() || !telefone.trim() || !email.trim() || !senha.trim() || !confirmarSenha.trim()) {
-      Alert.alert('Campos obrigatórios', 'Preencha todos os campos.');
+      setError('Preencha todos os campos.');
       return;
     }
-
-    if (!email.includes('@')) {
-      Alert.alert('Email inválido', 'Informe um email válido.');
-      return;
-    }
-
     if (senha !== confirmarSenha) {
-      Alert.alert('Senha diferente', 'A confirmação de senha precisa ser igual.');
+      setError('As senhas não coincidem.');
       return;
     }
-
-    await register({ nome, telefone: normalizePhone(telefone), email, senha });
-  }
+    setLoading(true);
+    const result = await register({ nome, telefone, email, senha });
+    setLoading(false);
+    if (!result.success) {
+      setError(result.message || 'Falha ao cadastrar.');
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Criar conta</Text>
-      <Text style={styles.subtitle}>Monte sua base inicial e entre no Nexo com um fluxo simples.</Text>
-
-      <SectionCard>
-        <TextInput style={styles.input} placeholder="Nome" placeholderTextColor={colors.textMuted} value={nome} onChangeText={setNome} />
-        <TextInput style={styles.input} placeholder="Telefone" placeholderTextColor={colors.textMuted} value={telefone} onChangeText={(value) => setTelefone(formatPhone(value))} keyboardType="phone-pad" />
-        <TextInput style={styles.input} placeholder="Email" placeholderTextColor={colors.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-        <TextInput style={styles.input} placeholder="Senha" placeholderTextColor={colors.textMuted} value={senha} onChangeText={setSenha} secureTextEntry />
-        <TextInput style={styles.input} placeholder="Confirmar senha" placeholderTextColor={colors.textMuted} value={confirmarSenha} onChangeText={setConfirmarSenha} secureTextEntry />
-        <PrimaryButton label="Cadastrar" onPress={handleRegister} />
-      </SectionCard>
-    </ScrollView>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+        <View style={styles.innerContainer}>
+          <Text style={styles.title}>Criar conta</Text>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <TextInput
+            style={styles.input}
+            placeholder="Nome completo"
+            placeholderTextColor="#777777"
+            value={nome}
+            onChangeText={setNome}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Telefone"
+            placeholderTextColor="#777777"
+            keyboardType="phone-pad"
+            value={telefone}
+            onChangeText={setTelefone}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#777777"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Senha"
+            placeholderTextColor="#777777"
+            secureTextEntry
+            value={senha}
+            onChangeText={setSenha}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirmar senha"
+            placeholderTextColor="#777777"
+            secureTextEntry
+            value={confirmarSenha}
+            onChangeText={setConfirmarSenha}
+          />
+          <PrimaryButton title={loading ? 'Criando...' : 'Cadastrar'} onPress={handleRegister} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 12 }}>
+            <Text style={styles.link}>Voltar ao login</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: colors.background,
-    padding: 20,
-    justifyContent: 'center',
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    paddingHorizontal: 24
+  },
+  innerContainer: {
+    backgroundColor: '#1f1f1f',
+    padding: 24,
+    borderRadius: 12
   },
   title: {
-    color: colors.white,
-    fontSize: 30,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    lineHeight: 22,
-    marginBottom: 18,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 16
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceSoft,
-    color: colors.white,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    fontSize: 16,
+    borderColor: '#444444',
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#ffffff',
+    marginBottom: 12
   },
+  error: {
+    color: '#e74c3c',
+    marginBottom: 8
+  },
+  link: {
+    color: '#006aff',
+    textAlign: 'center'
+  }
 });

@@ -1,72 +1,132 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../constants/theme';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { useServices } from '../../context/ServicesContext';
 import SectionCard from '../../components/SectionCard';
-import { useServices, ServiceStatus } from '../../context/ServicesContext';
-import { formatCurrency, getServiceTotal } from '../../utils/formatters';
 
+/**
+ * FinanceScreen apresenta um resumo financeiro dos serviços pagos. Exibe
+ * o faturamento do mês, o total geral e uma lista de serviços pagos com
+ * seus respectivos valores.
+ */
 export default function FinanceScreen() {
-  const { services, getMonthlyRevenue } = useServices();
+  const { services, summary } = useServices();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
 
-  const financeOverviewAthena = useMemo(() => {
-    const paidServices = services.filter((service) => service.status === ServiceStatus.PAGO);
-    const pendingServices = services.filter((service) => service.status !== ServiceStatus.PAGO);
+  const { paidServices, totalRevenue } = useMemo(() => {
+    let total = 0;
+    const list = [];
+    services.forEach((svc) => {
+      if (svc.status === 'PAGO' && svc.paidAt) {
+        const partsTotal = svc.parts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+        const serviceTotal = partsTotal + (Number(svc.labourCost) || 0);
+        total += serviceTotal;
+        list.push({
+          id: svc.id,
+          client: svc.clientName,
+          equipment: svc.equipment,
+          total: serviceTotal,
+          paidAt: svc.paidAt
+        });
+      }
+    });
+    list.sort((a, b) => new Date(b.paidAt) - new Date(a.paidAt));
+    return { paidServices: list, totalRevenue: total };
+  }, [services]);
 
-    return {
-      faturamentoMes: getMonthlyRevenue(),
-      pagosNoMes: paidServices.length,
-      valorEmAberto: pendingServices.reduce((sum, service) => sum + getServiceTotal(service), 0),
-      pagamentosRecentes: [...paidServices]
-        .sort((a, b) => new Date(b.paidAt || b.createdAt) - new Date(a.paidAt || a.createdAt))
-        .slice(0, 5),
-    };
-  }, [getMonthlyRevenue, services]);
+  const paidThisMonth = paidServices.filter((svc) => {
+    const dt = new Date(svc.paidAt);
+    return dt.getFullYear() === currentYear && dt.getMonth() === currentMonth;
+  });
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Financeiro</Text>
-      <Text style={styles.subtitle}>Uma visão simples do que entrou, do que ainda está aberto e do que acabou de fechar.</Text>
-
-      <View style={styles.summaryGrid}>
-        <SectionCard style={styles.summaryCard}><Text style={styles.summaryValue}>{formatCurrency(financeOverviewAthena.faturamentoMes)}</Text><Text style={styles.summaryLabel}>Faturamento do mês</Text></SectionCard>
-        <SectionCard style={styles.summaryCard}><Text style={styles.summaryValue}>{financeOverviewAthena.pagosNoMes}</Text><Text style={styles.summaryLabel}>Serviços pagos</Text></SectionCard>
-        <SectionCard style={styles.summaryCardWide}><Text style={styles.summaryValue}>{formatCurrency(financeOverviewAthena.valorEmAberto)}</Text><Text style={styles.summaryLabel}>Valor em aberto</Text></SectionCard>
-      </View>
-
+    <View style={styles.container}>
       <SectionCard>
-        <Text style={styles.sectionTitle}>Pagamentos recentes</Text>
-        {financeOverviewAthena.pagamentosRecentes.length === 0 ? (
-          <Text style={styles.emptyText}>Ainda não há pagamentos registrados neste fluxo.</Text>
-        ) : (
-          financeOverviewAthena.pagamentosRecentes.map((service) => (
-            <View key={service.id} style={styles.paymentRow}>
-              <View>
-                <Text style={styles.paymentClient}>{service.cliente}</Text>
-                <Text style={styles.paymentMeta}>{service.equipamento}</Text>
-              </View>
-              <Text style={styles.paymentValue}>{formatCurrency(getServiceTotal(service))}</Text>
-            </View>
-          ))
-        )}
+        <Text style={styles.cardTitle}>Faturamento do mês</Text>
+        <Text style={styles.cardValue}>R$ {summary.monthlyRevenue.toFixed(2)}</Text>
+        <Text style={styles.cardSub}>Serviços pagos este mês: {paidThisMonth.length}</Text>
       </SectionCard>
-    </ScrollView>
+      <SectionCard>
+        <Text style={styles.cardTitle}>Faturamento total</Text>
+        <Text style={styles.cardValue}>R$ {totalRevenue.toFixed(2)}</Text>
+        <Text style={styles.cardSub}>Serviços pagos no total: {paidServices.length}</Text>
+      </SectionCard>
+      <Text style={styles.listTitle}>Pagamentos recentes</Text>
+      <FlatList
+        data={paidServices}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.paymentItem}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.paymentClient}>{item.client}</Text>
+              <Text style={styles.paymentEquipment}>{item.equipment}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.paymentTotal}>R$ {item.total.toFixed(2)}</Text>
+              <Text style={styles.paymentDate}>{new Date(item.paidAt).toLocaleDateString()}</Text>
+            </View>
+          </View>
+        )}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhum serviço pago.</Text>}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 100 },
-  title: { color: colors.white, fontSize: 28, fontWeight: '800', marginBottom: 6 },
-  subtitle: { color: colors.textMuted, lineHeight: 20, marginBottom: 14 },
-  summaryGrid: { gap: 12, marginBottom: 14 },
-  summaryCard: { },
-  summaryCardWide: { },
-  summaryValue: { color: colors.white, fontSize: 26, fontWeight: '800', marginBottom: 6 },
-  summaryLabel: { color: colors.textMuted },
-  sectionTitle: { color: colors.white, fontSize: 18, fontWeight: '800', marginBottom: 12 },
-  emptyText: { color: colors.textMuted, lineHeight: 20 },
-  paymentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  paymentClient: { color: colors.white, fontWeight: '700', marginBottom: 4 },
-  paymentMeta: { color: colors.textMuted },
-  paymentValue: { color: colors.success, fontWeight: '800' },
+  container: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+    padding: 16
+  },
+  cardTitle: {
+    fontSize: 16,
+    color: '#aaaaaa'
+  },
+  cardValue: {
+    fontSize: 28,
+    color: '#27ae60',
+    fontWeight: '700'
+  },
+  cardSub: {
+    fontSize: 12,
+    color: '#888888',
+    marginTop: 4
+  },
+  listTitle: {
+    fontSize: 18,
+    color: '#ffffff',
+    fontWeight: '600',
+    marginVertical: 12
+  },
+  paymentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222222'
+  },
+  paymentClient: {
+    fontSize: 16,
+    color: '#ffffff'
+  },
+  paymentEquipment: {
+    fontSize: 14,
+    color: '#888888'
+  },
+  paymentTotal: {
+    fontSize: 16,
+    color: '#27ae60',
+    fontWeight: '600'
+  },
+  paymentDate: {
+    fontSize: 12,
+    color: '#888888'
+  },
+  empty: {
+    color: '#777777',
+    textAlign: 'center',
+    marginTop: 24
+  }
 });

@@ -1,44 +1,45 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors } from '../constants/theme';
+import { Pressable, Text, StyleSheet } from 'react-native';
 
-export default function PrimaryButton({ label, onPress, variant = 'primary', style }) {
-  const isGhost = variant === 'ghost';
-
+/**
+ * PrimaryButton é um componente reutilizável para botões principais. Ele
+ * aplica estilo consistente e torna a intenção de toque mais clara.
+ */
+export default function PrimaryButton({ title, onPress, style, disabled }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.base, isGhost ? styles.ghost : styles.primary, style]}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.button,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
+        style
+      ]}
     >
-      <Text style={[styles.label, isGhost ? styles.ghostLabel : styles.primaryLabel]}>{label}</Text>
+      <Text style={styles.text}>{title}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+  button: {
+    backgroundColor: '#006aff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
-  primary: {
-    backgroundColor: colors.primary,
+  pressed: {
+    opacity: 0.8
   },
-  ghost: {
-    backgroundColor: colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
+  disabled: {
+    backgroundColor: '#444444'
   },
-  label: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  primaryLabel: {
-    color: colors.white,
-  },
-  ghostLabel: {
-    color: colors.white,
-  },
+  text: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600'
+  }
 });
