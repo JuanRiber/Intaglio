@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+- atualiza o Expo SDK 49 para o 58 (com React 19 e React Native 0.88)
+- atualiza o React Navigation 6 para o 7
+- remove `react-native-reanimated` e `@expo/webpack-config`, que o app não usava, e simplifica o `babel.config.js`
+- a versão web passa a usar o Metro: template em `public/index.html`, manifesto em `public/manifest.webmanifest` e `npm run build:web` agora roda `expo export --platform web`
+- corrige o fluxo de completar perfil, que no Navigation 7 não voltava para as abas; a edição de perfil agora volta à tela anterior
+- vulnerabilidades de dependências de produção caem de 48 para 3 (moderadas)
+- remove `frame-ancestors` da CSP em `<meta>`, que o navegador ignora (deve ser enviado como cabeçalho HTTP)
+
 ## 0.3.0
 - senha passa a ser guardada como hash SHA-256 com salt e iterações; contas antigas em texto puro são migradas no primeiro login
 - conta guardada no Keychain/Keystore via expo-secure-store (na web, localStorage)

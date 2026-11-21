@@ -8,11 +8,13 @@ import {
   Platform,
   ScrollView
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useProfile } from '../../context/ProfileContext';
 import { palette, radii } from '../../theme/palette';
 
 export default function CompleteProfileScreen() {
+  const navigation = useNavigation();
   const { saveProfile, profile } = useProfile();
   const [name, setName] = useState(profile?.name || '');
   const [businessName, setBusinessName] = useState(profile?.businessName || '');
@@ -30,8 +32,13 @@ export default function CompleteProfileScreen() {
       return;
     }
     setLoading(true);
-    await saveProfile({ name, businessName, specialty, whatsapp, city, paymentMethod });
-    setLoading(false);
+    try {
+      await saveProfile({ name, businessName, specialty, whatsapp, city, paymentMethod });
+      // Ao editar um perfil já completo, volta para a tela anterior
+      if (navigation.canGoBack()) navigation.goBack();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

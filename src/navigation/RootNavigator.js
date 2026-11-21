@@ -37,8 +37,10 @@ export default function RootNavigator() {
       }}
     >
       {!isProfileComplete ? (
+        // Nome diferente da rota de edição, para que o navegador volte às abas
+        // assim que o perfil for concluído
         <Stack.Screen
-          name="CompleteProfile"
+          name="CompleteProfileRequired"
           component={CompleteProfileScreen}
           options={{ headerShown: false }}
         />
