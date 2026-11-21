@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   quickCard: { width: '48%' },
   quickTitle: { fontSize: 16, fontWeight: '700', color: palette.text },
   quickSub: { marginTop: 6, color: palette.textSoft },
-  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   chartMonth: { color: palette.textSoft, fontSize: 12 },
   chartArea: {
     height: 140,
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   bar: { width: 22, backgroundColor: palette.gold, borderRadius: 6, marginBottom: 6 },
   barLabel: { color: palette.textSoft, fontSize: 11, textTransform: 'capitalize' },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sectionTitle: { color: palette.text, fontSize: 18, fontWeight: '700' },
+  sectionTitle: { color: palette.text, fontSize: 18, fontWeight: '700', flexShrink: 1 },
   seeAll: { color: palette.gold, fontWeight: '600' },
   recentItem: {
     flexDirection: 'row',
