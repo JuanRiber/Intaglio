@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useServices, SERVICE_STATUSES } from '../../context/ServicesContext';
+import { useServices, SERVICE_STATUSES, SERVICE_STATUS_ORDER, getStatusInfo } from '../../context/ServicesContext';
 import SectionCard from '../../components/SectionCard';
 import PrimaryButton from '../../components/PrimaryButton';
 import { palette, radii } from '../../theme/palette';
+import { formatCurrency, getServiceTotals, toWhatsAppNumber } from '../../utils/format';
 
 export default function ServiceDetailScreen() {
   const route = useRoute();
@@ -21,14 +22,12 @@ export default function ServiceDetailScreen() {
     );
   }
 
-  const nextStatusOrder = ['AGUARDANDO', 'EM_SERVICO', 'PRONTO', 'ENTREGUE', 'PAGO'];
-  const currentIndex = nextStatusOrder.indexOf(service.status);
-  const nextStatus = currentIndex >= 0 && currentIndex < nextStatusOrder.length - 1
-    ? nextStatusOrder[currentIndex + 1]
+  const currentIndex = SERVICE_STATUS_ORDER.indexOf(service.status);
+  const nextStatus = currentIndex >= 0 && currentIndex < SERVICE_STATUS_ORDER.length - 1
+    ? SERVICE_STATUS_ORDER[currentIndex + 1]
     : null;
 
-  const partsTotal = service.parts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
-  const total = partsTotal + Number(service.labourCost || 0);
+  const { partsTotal, labourCost, total } = getServiceTotals(service);
 
   const handleDelete = () => {
     Alert.alert('Excluir serviço', 'Tem certeza que deseja excluir este serviço?', [
@@ -44,16 +43,25 @@ export default function ServiceDetailScreen() {
     ]);
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = async () => {
+    const number = toWhatsAppNumber(service.phone);
+    if (!number) {
+      Alert.alert('Telefone inválido', 'Edite o serviço e informe um telefone com DDD para enviar o orçamento.');
+      return;
+    }
     const message =
       `Olá ${service.clientName}!\n` +
       `Segue o orçamento para o serviço no equipamento ${service.equipment}.\n` +
-      `Peças: R$ ${partsTotal.toFixed(2)}\n` +
-      `Mão de obra: R$ ${Number(service.labourCost).toFixed(2)}\n` +
-      `Total: R$ ${total.toFixed(2)}\n` +
-      `Status atual: ${SERVICE_STATUSES[service.status].label}.`;
-    const url = `https://wa.me/${service.phone}?text=${encodeURIComponent(message)}`;
-    Linking.openURL(url).catch(() => {});
+      `Peças: ${formatCurrency(partsTotal)}\n` +
+      `Mão de obra: ${formatCurrency(labourCost)}\n` +
+      `Total: ${formatCurrency(total)}\n` +
+      `Status atual: ${getStatusInfo(service.status).label}.`;
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+    try {
+      await Linking.openURL(url);
+    } catch (err) {
+      Alert.alert('Não foi possível abrir o WhatsApp', 'Verifique se o aplicativo está instalado.');
+    }
   };
 
   return (
@@ -94,12 +102,12 @@ export default function ServiceDetailScreen() {
         {service.parts.map((part, idx) => (
           <View key={idx} style={styles.detailRow}>
             <Text style={styles.value}>{part.description}</Text>
-            <Text style={styles.value}>R$ {Number(part.price).toFixed(2)}</Text>
+            <Text style={styles.value}>{formatCurrency(part.price)}</Text>
           </View>
         ))}
-        <View style={styles.detailRow}><Text style={styles.label}>Subtotal</Text><Text style={styles.value}>R$ {partsTotal.toFixed(2)}</Text></View>
-        <View style={styles.detailRow}><Text style={styles.label}>Mão de obra</Text><Text style={styles.value}>R$ {Number(service.labourCost).toFixed(2)}</Text></View>
-        <View style={[styles.detailRow, styles.totalRow]}><Text style={styles.totalLabel}>Total</Text><Text style={styles.totalValue}>R$ {total.toFixed(2)}</Text></View>
+        <View style={styles.detailRow}><Text style={styles.label}>Subtotal</Text><Text style={styles.value}>{formatCurrency(partsTotal)}</Text></View>
+        <View style={styles.detailRow}><Text style={styles.label}>Mão de obra</Text><Text style={styles.value}>{formatCurrency(labourCost)}</Text></View>
+        <View style={[styles.detailRow, styles.totalRow]}><Text style={styles.totalLabel}>Total</Text><Text style={styles.totalValue}>{formatCurrency(total)}</Text></View>
       </SectionCard>
 
       {nextStatus ? (

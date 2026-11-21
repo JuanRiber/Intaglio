@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Nexo",
+    "slug": "nexo",
+    "version": "0.2.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "nexo",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "br.com.nexo.app"
+    },
+    "android": {
+      "package": "br.com.nexo.app"
+    },
+    "web": {
+      "bundler": "webpack"
+    }
+  }
+}

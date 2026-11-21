@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { v4 as uuidv4 } from 'uuid';
+import { getServiceTotals, isSameMonth } from '../utils/format';
 
 /**
  * ServicesContext gerencia a lista de serviços cadastrados no Nexo. Cada
@@ -12,8 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const SERVICES_KEY = 'nexo_athena_services';
 
-// Definição de status com rótulo e cor. Os nomes das chaves referem-se a
-// divindades gregas e celtas de forma discreta, mantendo legibilidade.
+// Definição de status com rótulo e cor.
 export const SERVICE_STATUSES = {
   AGUARDANDO: { label: 'Aguardando', color: '#F1C40F' },
   EM_SERVICO: { label: 'Em serviço', color: '#3498DB' },
@@ -22,7 +21,52 @@ export const SERVICE_STATUSES = {
   PAGO: { label: 'Pago', color: '#27AE60' }
 };
 
+// Ordem do fluxo de um serviço, do primeiro ao último status.
+export const SERVICE_STATUS_ORDER = Object.keys(SERVICE_STATUSES);
+
+// Devolve os dados do status, com um fallback para valores desconhecidos.
+export function getStatusInfo(status) {
+  return SERVICE_STATUSES[status] || { label: 'Aguardando', color: SERVICE_STATUSES.AGUARDANDO.color };
+}
+
 const initialState = [];
+
+// Gera um identificador único sem depender de crypto.getRandomValues,
+// que não existe por padrão no React Native.
+function generateId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function normalizeParts(parts) {
+  return (Array.isArray(parts) ? parts : [])
+    .map((p) => ({ description: String(p?.description || '').trim(), price: Number(p?.price) || 0 }))
+    .filter((p) => p.description);
+}
+
+/**
+ * Valida e normaliza um serviço lido do armazenamento. Retorna null quando
+ * o registro está corrompido, para que ele não derrube as telas.
+ */
+function sanitizeService(raw) {
+  if (!raw || typeof raw !== 'object' || !raw.id) return null;
+  const now = new Date().toISOString();
+  const status = SERVICE_STATUSES[raw.status] ? raw.status : 'AGUARDANDO';
+  return {
+    id: String(raw.id),
+    clientName: String(raw.clientName || '').trim() || 'Cliente sem nome',
+    phone: String(raw.phone || ''),
+    equipment: String(raw.equipment || ''),
+    problem: String(raw.problem || ''),
+    parts: Array.isArray(raw.parts)
+      ? raw.parts.map((p) => ({ description: String(p?.description || ''), price: Number(p?.price) || 0 }))
+      : [],
+    labourCost: Number(raw.labourCost) || 0,
+    status,
+    createdAt: raw.createdAt || now,
+    updatedAt: raw.updatedAt || raw.createdAt || now,
+    paidAt: status === 'PAGO' ? raw.paidAt || raw.updatedAt || now : raw.paidAt || null
+  };
+}
 
 function servicesReducer(state, action) {
   switch (action.type) {
@@ -37,6 +81,7 @@ function servicesReducer(state, action) {
     case 'DELETE_SERVICE':
       return state.filter((svc) => svc.id !== action.payload);
     case 'UPDATE_STATUS':
+      if (!SERVICE_STATUSES[action.payload.status]) return state;
       return state.map((svc) => {
         if (svc.id !== action.payload.id) return svc;
         const updated = { ...svc, status: action.payload.status, updatedAt: new Date().toISOString() };
@@ -64,7 +109,7 @@ export function ServicesProvider({ children }) {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
-            dispatch({ type: 'SET_SERVICES', payload: parsed });
+            dispatch({ type: 'SET_SERVICES', payload: parsed.map(sanitizeService).filter(Boolean) });
           }
         }
       } catch (err) {
@@ -85,14 +130,13 @@ export function ServicesProvider({ children }) {
   }, [services]);
 
   const addService = useCallback((data) => {
-    const id = uuidv4();
     const newService = {
-      id,
-      clientName: data.clientName.trim(),
-      phone: data.phone.trim(),
-      equipment: data.equipment.trim(),
-      problem: data.problem.trim(),
-      parts: data.parts.map((p) => ({ description: p.description.trim(), price: Number(p.price) || 0 })),
+      id: generateId(),
+      clientName: String(data.clientName || '').trim(),
+      phone: String(data.phone || '').trim(),
+      equipment: String(data.equipment || '').trim(),
+      problem: String(data.problem || '').trim(),
+      parts: normalizeParts(data.parts),
       labourCost: Number(data.labourCost) || 0,
       status: 'AGUARDANDO',
       createdAt: new Date().toISOString(),
@@ -103,7 +147,15 @@ export function ServicesProvider({ children }) {
   }, []);
 
   const editService = useCallback((id, updates) => {
-    dispatch({ type: 'EDIT_SERVICE', payload: { id, updates } });
+    const safeUpdates = {
+      clientName: String(updates.clientName || '').trim(),
+      phone: String(updates.phone || '').trim(),
+      equipment: String(updates.equipment || '').trim(),
+      problem: String(updates.problem || '').trim(),
+      parts: normalizeParts(updates.parts),
+      labourCost: Number(updates.labourCost) || 0
+    };
+    dispatch({ type: 'EDIT_SERVICE', payload: { id, updates: safeUpdates } });
   }, []);
 
   const deleteService = useCallback((id) => {
@@ -114,30 +166,43 @@ export function ServicesProvider({ children }) {
     dispatch({ type: 'UPDATE_STATUS', payload: { id, status } });
   }, []);
 
-  // Total de serviços no mês atual, receitas e contagem por status
+  // Receita do mês, contagem por status e serviços ainda em andamento
   const summary = useMemo(() => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+    const counts = Object.fromEntries(SERVICE_STATUS_ORDER.map((key) => [key, 0]));
     let monthlyRevenue = 0;
-    const counts = {
-      AGUARDANDO: 0,
-      EM_SERVICO: 0,
-      PRONTO: 0,
-      ENTREGUE: 0,
-      PAGO: 0
-    };
+    let totalRevenue = 0;
+    let paidThisMonth = 0;
     services.forEach((svc) => {
       counts[svc.status] += 1;
       if (svc.status === 'PAGO' && svc.paidAt) {
-        const dt = new Date(svc.paidAt);
-        if (dt.getFullYear() === currentYear && dt.getMonth() === currentMonth) {
-          const partsTotal = svc.parts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
-          monthlyRevenue += partsTotal + (Number(svc.labourCost) || 0);
+        const { total } = getServiceTotals(svc);
+        totalRevenue += total;
+        if (isSameMonth(svc.paidAt)) {
+          monthlyRevenue += total;
+          paidThisMonth += 1;
         }
       }
     });
-    return { monthlyRevenue, counts };
+    const activeCount = services.length - counts.PAGO;
+
+    // Receita dos últimos 6 meses, do mais antigo para o atual
+    const now = new Date();
+    const history = Array.from({ length: 6 }, (_, i) => {
+      const ref = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      return {
+        key: `${ref.getFullYear()}-${ref.getMonth()}`,
+        label: ref.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+        reference: ref,
+        revenue: 0
+      };
+    });
+    services.forEach((svc) => {
+      if (svc.status !== 'PAGO' || !svc.paidAt) return;
+      const bucket = history.find((h) => isSameMonth(svc.paidAt, h.reference));
+      if (bucket) bucket.revenue += getServiceTotals(svc).total;
+    });
+
+    return { monthlyRevenue, totalRevenue, paidThisMonth, activeCount, counts, history };
   }, [services]);
 
   const value = useMemo(

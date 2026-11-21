@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useProfile } from '../../context/ProfileContext';
 import { useAuth } from '../../context/AuthContext';
 import SectionCard from '../../components/SectionCard';
 import PrimaryButton from '../../components/PrimaryButton';
 import { palette, radii } from '../../theme/palette';
+
+const comingSoon = () => Alert.alert('Em breve', 'Esta função estará disponível numa próxima versão.');
 
 export default function MoreScreen() {
   const navigation = useNavigation();
@@ -21,7 +23,7 @@ export default function MoreScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.profileName}>{profile?.name || currentUser?.nome || 'Seu perfil'}</Text>
-            <Text style={styles.profileEmail}>{currentUser?.email || 'conta@nexo.app'}</Text>
+            <Text style={styles.profileEmail}>{currentUser?.email || ''}</Text>
           </View>
         </View>
       </SectionCard>
@@ -31,21 +33,21 @@ export default function MoreScreen() {
           <Text style={styles.rowText}>{isProfileComplete ? 'Dados da conta' : 'Completar perfil'}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.row}>
+        <TouchableOpacity style={styles.row} onPress={comingSoon}>
           <Text style={styles.rowText}>Método de recebimento</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={styles.soon}>Em breve</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.row}>
+        <TouchableOpacity style={styles.row} onPress={comingSoon}>
           <Text style={styles.rowText}>Mensagem automática</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={styles.soon}>Em breve</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.row}>
+        <TouchableOpacity style={styles.row} onPress={comingSoon}>
           <Text style={styles.rowText}>Notificações</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={styles.soon}>Em breve</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]}>
+        <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]} onPress={comingSoon}>
           <Text style={styles.rowText}>Suporte</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={styles.soon}>Em breve</Text>
         </TouchableOpacity>
       </SectionCard>
 
@@ -86,6 +88,7 @@ const styles = StyleSheet.create({
   },
   rowText: { color: palette.text, fontSize: 15, fontWeight: '600' },
   chevron: { color: palette.textSoft, fontSize: 20 },
+  soon: { color: palette.textSoft, fontSize: 12 },
   logoutButton: {
     marginTop: 12,
     borderColor: '#E8CAC2'

@@ -3,55 +3,42 @@ import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useServices } from '../../context/ServicesContext';
 import SectionCard from '../../components/SectionCard';
 import { palette, radii, shadowCard } from '../../theme/palette';
+import { formatCurrency, formatDate, getServiceTotals } from '../../utils/format';
 
 export default function FinanceScreen() {
   const { services, summary } = useServices();
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
 
-  const { paidServices, totalRevenue } = useMemo(() => {
-    let total = 0;
-    const list = [];
-    services.forEach((svc) => {
-      if (svc.status === 'PAGO' && svc.paidAt) {
-        const partsTotal = svc.parts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
-        const serviceTotal = partsTotal + (Number(svc.labourCost) || 0);
-        total += serviceTotal;
-        list.push({
+  const paidServices = useMemo(
+    () =>
+      services
+        .filter((svc) => svc.status === 'PAGO' && svc.paidAt)
+        .map((svc) => ({
           id: svc.id,
           client: svc.clientName,
           equipment: svc.equipment,
-          total: serviceTotal,
+          total: getServiceTotals(svc).total,
           paidAt: svc.paidAt
-        });
-      }
-    });
-    list.sort((a, b) => new Date(b.paidAt) - new Date(a.paidAt));
-    return { paidServices: list, totalRevenue: total };
-  }, [services]);
-
-  const paidThisMonth = paidServices.filter((svc) => {
-    const dt = new Date(svc.paidAt);
-    return dt.getFullYear() === currentYear && dt.getMonth() === currentMonth;
-  });
+        }))
+        .sort((a, b) => new Date(b.paidAt) - new Date(a.paidAt)),
+    [services]
+  );
 
   return (
     <View style={styles.container}>
       <SectionCard tone="dark">
         <Text style={styles.heroLabel}>Faturamento do mês</Text>
-        <Text style={styles.heroValue}>R$ {summary.monthlyRevenue.toFixed(2)}</Text>
+        <Text style={styles.heroValue}>{formatCurrency(summary.monthlyRevenue)}</Text>
         <Text style={styles.heroSub}>Recebimentos fechados no período atual</Text>
       </SectionCard>
 
       <View style={styles.duoGrid}>
         <SectionCard style={styles.smallCard}>
           <Text style={styles.smallLabel}>Serviços pagos</Text>
-          <Text style={styles.smallValue}>{paidThisMonth.length}</Text>
+          <Text style={styles.smallValue}>{summary.paidThisMonth}</Text>
         </SectionCard>
         <SectionCard style={styles.smallCard}>
           <Text style={styles.smallLabel}>Total geral</Text>
-          <Text style={styles.smallValue}>R$ {totalRevenue.toFixed(2)}</Text>
+          <Text style={styles.smallValue}>{formatCurrency(summary.totalRevenue)}</Text>
         </SectionCard>
       </View>
 
@@ -62,15 +49,15 @@ export default function FinanceScreen() {
         renderItem={({ item }) => (
           <View style={styles.paymentItem}>
             <View style={styles.avatarBox}>
-              <Text style={styles.avatarText}>{item.client?.slice(0,1)?.toUpperCase()}</Text>
+              <Text style={styles.avatarText}>{item.client?.slice(0, 1)?.toUpperCase() || 'N'}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.paymentClient}>{item.client}</Text>
               <Text style={styles.paymentEquipment}>{item.equipment}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.paymentTotal}>R$ {item.total.toFixed(2)}</Text>
-              <Text style={styles.paymentDate}>{new Date(item.paidAt).toLocaleDateString()}</Text>
+              <Text style={styles.paymentTotal}>{formatCurrency(item.total)}</Text>
+              <Text style={styles.paymentDate}>{formatDate(item.paidAt)}</Text>
             </View>
           </View>
         )}

@@ -20,7 +20,8 @@ export function ProfileProvider({ children }) {
     async function load() {
       try {
         const raw = await AsyncStorage.getItem(PROFILE_KEY);
-        setProfile(raw ? JSON.parse(raw) : null);
+        const parsed = raw ? JSON.parse(raw) : null;
+        setProfile(parsed && typeof parsed === 'object' ? parsed : null);
       } catch (err) {
         console.warn('Falha ao restaurar perfil profissional', err);
       } finally {

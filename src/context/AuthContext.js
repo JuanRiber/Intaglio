@@ -2,10 +2,17 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
- * AuthContext gerencia o fluxo de autenticação e onboarding. Ele persiste
- * informações no armazenamento local usando chaves com nomes inspirados
- * em divindades para não conflitar com outros aplicativos. Os nomes das
- * chaves são autoexplicativos apesar das referências mitológicas.
+ * AuthContext gerencia o fluxo de autenticação e onboarding, de forma local.
+ *
+ * ATENÇÃO: a conta (incluindo a senha) é guardada em texto puro no
+ * AsyncStorage. Isto é apenas uma simulação para desenvolvimento e deve ser
+ * trocado por um backend de autenticação antes de qualquer lançamento.
+ *
+ * As chaves de armazenamento têm nomes históricos e foram mantidas para não
+ * perder os dados de quem já usa o app:
+ *   nexo_apollo_onboarding -> onboarding já visto
+ *   nexo_gaia_user         -> usuário logado
+ *   nexo_cernunnos_account -> conta cadastrada
  */
 
 const STORAGE_KEYS = {
@@ -30,7 +37,8 @@ export function AuthProvider({ children }) {
           AsyncStorage.getItem(STORAGE_KEYS.user)
         ]);
         setOnboardingSeen(storedOnboarding === 'true');
-        setCurrentUser(storedUser ? JSON.parse(storedUser) : null);
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        setCurrentUser(parsedUser && typeof parsedUser === 'object' ? parsedUser : null);
       } catch (err) {
         console.warn('Falha ao restaurar sessão de autenticação', err);
       } finally {
@@ -62,7 +70,12 @@ export function AuthProvider({ children }) {
         message: 'Nenhuma conta cadastrada foi encontrada. Crie uma conta para entrar.'
       };
     }
-    const account = JSON.parse(raw);
+    let account;
+    try {
+      account = JSON.parse(raw);
+    } catch (err) {
+      return { success: false, message: 'Os dados da conta estão corrompidos. Crie uma nova conta.' };
+    }
     if (account.email !== normalizedEmail || account.senha !== senha) {
       return { success: false, message: 'Email ou senha inválidos.' };
     }
@@ -82,6 +95,16 @@ export function AuthProvider({ children }) {
    */
   const register = useCallback(async ({ nome, telefone, email, senha }) => {
     const normalizedEmail = email.trim().toLowerCase();
+    const existingRaw = await AsyncStorage.getItem(STORAGE_KEYS.account);
+    if (existingRaw) {
+      try {
+        if (JSON.parse(existingRaw).email === normalizedEmail) {
+          return { success: false, message: 'Este email já está cadastrado neste aparelho. Faça login.' };
+        }
+      } catch (err) {
+        // conta corrompida: permite sobrescrever
+      }
+    }
     const account = {
       nome: nome.trim(),
       telefone: telefone.trim(),
@@ -117,7 +140,12 @@ export function AuthProvider({ children }) {
         message: 'Nenhuma conta foi encontrada para este aplicativo.'
       };
     }
-    const account = JSON.parse(raw);
+    let account;
+    try {
+      account = JSON.parse(raw);
+    } catch (err) {
+      return { success: false, message: 'Os dados da conta estão corrompidos.' };
+    }
     if (account.email !== normalizedEmail) {
       return { success: false, message: 'Email não encontrado.' };
     }

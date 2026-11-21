@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useServices, SERVICE_STATUSES } from '../../context/ServicesContext';
+import { useServices, SERVICE_STATUSES, getStatusInfo } from '../../context/ServicesContext';
 import { palette, radii, shadowCard } from '../../theme/palette';
+import { formatCurrency, getServiceTotals } from '../../utils/format';
 
 export default function ServicesScreen() {
   const navigation = useNavigation();
@@ -14,7 +15,7 @@ export default function ServicesScreen() {
     return services
       .filter((svc) => selectedStatus === 'TODOS' || svc.status === selectedStatus)
       .filter((svc) => {
-        const q = query.toLowerCase();
+        const q = query.trim().toLowerCase();
         return (
           svc.clientName.toLowerCase().includes(q) ||
           svc.equipment.toLowerCase().includes(q) ||
@@ -35,12 +36,10 @@ export default function ServicesScreen() {
       <View style={{ flex: 1 }}>
         <Text style={styles.itemClient}>{item.equipment}</Text>
         <Text style={styles.itemSub}>{item.clientName}</Text>
-        <Text style={styles.itemPrice}>
-          R$ {(item.parts.reduce((sum, p) => sum + (Number(p.price) || 0), 0) + Number(item.labourCost || 0)).toFixed(2)}
-        </Text>
+        <Text style={styles.itemPrice}>{formatCurrency(getServiceTotals(item).total)}</Text>
       </View>
       <View style={styles.itemStatus(item.status)}>
-        <Text style={styles.itemStatusText}>{SERVICE_STATUSES[item.status].label}</Text>
+        <Text style={styles.itemStatusText}>{getStatusInfo(item.status).label}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -136,7 +135,7 @@ const styles = StyleSheet.create({
   itemSub: { color: palette.textSoft, fontSize: 13, marginTop: 3 },
   itemPrice: { color: palette.text, fontSize: 13, marginTop: 6, fontWeight: '600' },
   itemStatus: (status) => ({
-    backgroundColor: SERVICE_STATUSES[status].color + '22',
+    backgroundColor: getStatusInfo(status).color + '22',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5

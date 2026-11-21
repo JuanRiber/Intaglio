@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList } from 'react-native';
 import { useServices } from '../../context/ServicesContext';
 import { palette, radii, shadowCard } from '../../theme/palette';
+import { onlyDigits } from '../../utils/format';
 
 export default function ClientsScreen() {
   const { services } = useServices();
@@ -10,14 +11,16 @@ export default function ClientsScreen() {
   const clients = useMemo(() => {
     const map = new Map();
     services.forEach((svc) => {
-      const key = `${svc.clientName}|${svc.phone || ''}`;
-      if (!map.has(key)) map.set(key, { name: svc.clientName, phone: svc.phone, count: 0 });
+      // Agrupa pelo telefone (só dígitos) quando existe; senão pelo nome em minúsculas
+      const digits = onlyDigits(svc.phone);
+      const key = digits ? `tel:${digits}` : `nome:${svc.clientName.trim().toLowerCase()}`;
+      if (!map.has(key)) map.set(key, { key, name: svc.clientName, phone: svc.phone, count: 0 });
       map.get(key).count += 1;
     });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [services]);
 
-  const filtered = clients.filter((cl) => cl.name.toLowerCase().includes(query.toLowerCase()));
+  const filtered = clients.filter((cl) => cl.name.toLowerCase().includes(query.trim().toLowerCase()));
 
   return (
     <View style={styles.container}>
@@ -30,7 +33,7 @@ export default function ClientsScreen() {
       />
       <FlatList
         data={filtered}
-        keyExtractor={(item) => item.name + item.phone}
+        keyExtractor={(item) => item.key}
         renderItem={({ item }) => (
           <View style={styles.clientItem}>
             <View style={styles.avatarBox}>

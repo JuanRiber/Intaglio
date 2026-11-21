@@ -2,10 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useProfile } from '../../context/ProfileContext';
-import { useServices, SERVICE_STATUSES } from '../../context/ServicesContext';
+import { useServices, getStatusInfo } from '../../context/ServicesContext';
 import SectionCard from '../../components/SectionCard';
 import PrimaryButton from '../../components/PrimaryButton';
 import { palette, shadowCard, radii } from '../../theme/palette';
+import { formatCurrency } from '../../utils/format';
 
 export default function DashboardScreen() {
   const navigation = useNavigation();
@@ -17,7 +18,8 @@ export default function DashboardScreen() {
     [services]
   );
 
-  const firstName = profile?.name?.split(' ')[0] || 'João';
+  const maxRevenue = Math.max(...summary.history.map((m) => m.revenue), 1);
+  const firstName = profile?.name?.trim().split(' ')[0] || '';
 
   const renderRecent = ({ item }) => (
     <TouchableOpacity
@@ -32,7 +34,7 @@ export default function DashboardScreen() {
         <Text style={styles.recentSub}>{item.equipment}</Text>
       </View>
       <View style={styles.statusPill(item.status)}>
-        <Text style={styles.statusPillText}>{SERVICE_STATUSES[item.status].label}</Text>
+        <Text style={styles.statusPillText}>{getStatusInfo(item.status).label}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -49,20 +51,20 @@ export default function DashboardScreen() {
           <View style={styles.hero}>
             <View style={styles.heroTop}>
               <View>
-                <Text style={styles.hello}>Olá, {firstName}.</Text>
+                <Text style={styles.hello}>{firstName ? `Olá, ${firstName}.` : 'Olá.'}</Text>
                 <Text style={styles.helloSub}>Aqui está o resumo do seu negócio.</Text>
               </View>
             </View>
             <View style={styles.revenueCard}>
               <Text style={styles.revenueLabel}>Faturamento do mês</Text>
-              <Text style={styles.revenueValue}>R$ {summary.monthlyRevenue.toFixed(2)}</Text>
+              <Text style={styles.revenueValue}>{formatCurrency(summary.monthlyRevenue)}</Text>
               <Text style={styles.revenueHint}>controle claro do que entrou no período</Text>
             </View>
           </View>
 
           <View style={styles.metricGrid}>
             <SectionCard style={styles.metricCard}>
-              <Text style={styles.metricNumber}>{services.length}</Text>
+              <Text style={styles.metricNumber}>{summary.activeCount}</Text>
               <Text style={styles.metricLabel}>Serviços ativos</Text>
             </SectionCard>
             <SectionCard style={styles.metricCard}>
@@ -74,7 +76,7 @@ export default function DashboardScreen() {
               <Text style={styles.metricLabel}>Prontos para entrega</Text>
             </SectionCard>
             <SectionCard style={styles.metricCard}>
-              <Text style={styles.metricNumber}>{summary.counts.PAGO}</Text>
+              <Text style={styles.metricNumber}>{summary.paidThisMonth}</Text>
               <Text style={styles.metricLabel}>Pagos no mês</Text>
             </SectionCard>
           </View>
@@ -86,23 +88,37 @@ export default function DashboardScreen() {
           />
 
           <View style={styles.quickGrid}>
-            <SectionCard style={styles.quickCard}>
-              <Text style={styles.quickTitle}>Clientes</Text>
-              <Text style={styles.quickSub}>Ver todos</Text>
-            </SectionCard>
-            <SectionCard style={styles.quickCard}>
-              <Text style={styles.quickTitle}>Orçamentos</Text>
-              <Text style={styles.quickSub}>Pendentes</Text>
-            </SectionCard>
+            <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('ClientsTab')} accessibilityRole="button">
+              <SectionCard>
+                <Text style={styles.quickTitle}>Clientes</Text>
+                <Text style={styles.quickSub}>Ver todos</Text>
+              </SectionCard>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('FinanceTab')} accessibilityRole="button">
+              <SectionCard>
+                <Text style={styles.quickTitle}>Financeiro</Text>
+                <Text style={styles.quickSub}>Ver recebimentos</Text>
+              </SectionCard>
+            </TouchableOpacity>
           </View>
 
           <SectionCard>
             <View style={styles.chartHeader}>
               <Text style={styles.sectionTitle}>Evolução do faturamento</Text>
-              <Text style={styles.chartMonth}>Este mês</Text>
+              <Text style={styles.chartMonth}>Últimos 6 meses</Text>
             </View>
             <View style={styles.chartArea}>
-              <View style={styles.chartLine} />
+              {summary.history.map((month) => (
+                <View key={month.key} style={styles.barColumn}>
+                  <View
+                    style={[
+                      styles.bar,
+                      { height: `${Math.max((month.revenue / maxRevenue) * 75, month.revenue > 0 ? 6 : 2)}%` }
+                    ]}
+                  />
+                  <Text style={styles.barLabel}>{month.label}</Text>
+                </View>
+              ))}
             </View>
           </SectionCard>
 
@@ -152,22 +168,22 @@ const styles = StyleSheet.create({
   chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chartMonth: { color: palette.textSoft, fontSize: 12 },
   chartArea: {
-    height: 120,
+    height: 140,
     marginTop: 14,
     borderRadius: radii.md,
     backgroundColor: '#FCFBF8',
     borderWidth: 1,
     borderColor: palette.line,
-    justifyContent: 'center',
-    overflow: 'hidden'
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 8
   },
-  chartLine: {
-    marginHorizontal: 12,
-    height: 2,
-    backgroundColor: palette.gold,
-    borderRadius: 999,
-    transform: [{ rotate: '-6deg' }, { scaleX: 0.92 }]
-  },
+  barColumn: { flex: 1, height: '100%', alignItems: 'center', justifyContent: 'flex-end' },
+  bar: { width: 22, backgroundColor: palette.gold, borderRadius: 6, marginBottom: 6 },
+  barLabel: { color: palette.textSoft, fontSize: 11, textTransform: 'capitalize' },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   sectionTitle: { color: palette.text, fontSize: 18, fontWeight: '700' },
   seeAll: { color: palette.gold, fontWeight: '600' },
@@ -195,7 +211,7 @@ const styles = StyleSheet.create({
   recentClient: { color: palette.text, fontSize: 15, fontWeight: '700' },
   recentSub: { color: palette.textSoft, fontSize: 13, marginTop: 3 },
   statusPill: (status) => ({
-    backgroundColor: SERVICE_STATUSES[status].color + '22',
+    backgroundColor: getStatusInfo(status).color + '22',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5
