@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nexo",
     "slug": "nexo",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "nexo",
@@ -18,16 +18,9 @@
       }
     },
     "web": {
-      "bundler": "webpack",
-      "favicon": "./assets/favicon.png",
-      "name": "Nexo",
-      "shortName": "Nexo",
-      "lang": "pt-BR",
-      "description": "Organize serviços, orçamentos, clientes e faturamento do seu negócio.",
-      "themeColor": "#0F0F10",
-      "backgroundColor": "#FAF8F4",
-      "display": "standalone",
-      "orientation": "portrait"
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
     },
     "icon": "./assets/icon.png"
   }
