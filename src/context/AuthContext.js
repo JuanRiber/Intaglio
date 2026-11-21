@@ -1,12 +1,17 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSecureItem, setSecureItem } from '../utils/secureStorage';
+import { createPasswordRecord, verifyPassword, validatePasswordStrength } from '../utils/security';
 
 /**
  * AuthContext gerencia o fluxo de autenticação e onboarding, de forma local.
  *
- * ATENÇÃO: a conta (incluindo a senha) é guardada em texto puro no
- * AsyncStorage. Isto é apenas uma simulação para desenvolvimento e deve ser
- * trocado por um backend de autenticação antes de qualquer lançamento.
+ * A conta fica no cofre seguro do aparelho (Keychain/Keystore; na web,
+ * localStorage) e a senha é guardada apenas como hash com salt. Contas antigas,
+ * criadas com senha em texto puro, são migradas no primeiro login.
+ *
+ * ATENÇÃO: como tudo é local, isto não substitui autenticação no servidor.
+ * Um backend de autenticação continua necessário antes de qualquer lançamento.
  *
  * As chaves de armazenamento têm nomes históricos e foram mantidas para não
  * perder os dados de quem já usa o app:
@@ -21,7 +26,41 @@ const STORAGE_KEYS = {
   account: 'nexo_cernunnos_account'
 };
 
+const GUARD_KEY = 'nexo_login_guard';
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_SECONDS = 60;
+
 const AuthContext = createContext(null);
+
+async function readAccount() {
+  const raw = await getSecureItem(STORAGE_KEYS.account);
+  if (!raw) return { account: null, corrupted: false };
+  try {
+    const account = JSON.parse(raw);
+    return account && typeof account === 'object' ? { account, corrupted: false } : { account: null, corrupted: true };
+  } catch (err) {
+    return { account: null, corrupted: true };
+  }
+}
+
+// Controle de tentativas de login falhas, para frear tentativa e erro
+async function readGuard() {
+  try {
+    const raw = await AsyncStorage.getItem(GUARD_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return { failures: Number(parsed?.failures) || 0, lockedUntil: Number(parsed?.lockedUntil) || 0 };
+  } catch (err) {
+    return { failures: 0, lockedUntil: 0 };
+  }
+}
+
+async function writeGuard(guard) {
+  try {
+    await AsyncStorage.setItem(GUARD_KEY, JSON.stringify(guard));
+  } catch (err) {
+    console.warn('Falha ao salvar controle de tentativas', err);
+  }
+}
 
 export function AuthProvider({ children }) {
   const [isBooting, setIsBooting] = useState(true);
@@ -58,27 +97,62 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
-   * Realiza login com email e senha. Os dados são verificados contra a
-   * conta armazenada localmente. Retorna objeto com sucesso e mensagem.
+   * Realiza login com email e senha. A senha é verificada contra o hash da
+   * conta local. Após várias falhas seguidas, o login fica bloqueado por
+   * um tempo. Retorna objeto com sucesso e mensagem.
    */
   const login = useCallback(async ({ email, senha }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const raw = await AsyncStorage.getItem(STORAGE_KEYS.account);
-    if (!raw) {
+
+    const guard = await readGuard();
+    const now = Date.now();
+    if (guard.lockedUntil > now) {
+      const seconds = Math.ceil((guard.lockedUntil - now) / 1000);
+      return { success: false, message: `Muitas tentativas. Tente novamente em ${seconds}s.` };
+    }
+
+    const { account, corrupted } = await readAccount();
+    if (corrupted) {
+      return { success: false, message: 'Os dados da conta estão corrompidos. Crie uma nova conta.' };
+    }
+    if (!account) {
       return {
         success: false,
         message: 'Nenhuma conta cadastrada foi encontrada. Crie uma conta para entrar.'
       };
     }
-    let account;
-    try {
-      account = JSON.parse(raw);
-    } catch (err) {
-      return { success: false, message: 'Os dados da conta estão corrompidos. Crie uma nova conta.' };
+
+    let valid = false;
+    if (account.email === normalizedEmail) {
+      if (account.passwordHash) {
+        valid = await verifyPassword(senha, account);
+      } else if (typeof account.senha === 'string') {
+        // Conta antiga com senha em texto puro: confere e migra para hash
+        valid = account.senha === senha;
+        if (valid) {
+          const { senha: _legacyPassword, ...rest } = account;
+          const record = await createPasswordRecord(senha);
+          await setSecureItem(STORAGE_KEYS.account, JSON.stringify({ ...rest, ...record }));
+        }
+      }
     }
-    if (account.email !== normalizedEmail || account.senha !== senha) {
-      return { success: false, message: 'Email ou senha inválidos.' };
+
+    if (!valid) {
+      const failures = guard.failures + 1;
+      const locked = failures >= MAX_FAILED_ATTEMPTS;
+      await writeGuard({
+        failures: locked ? 0 : failures,
+        lockedUntil: locked ? Date.now() + LOCK_SECONDS * 1000 : 0
+      });
+      return {
+        success: false,
+        message: locked
+          ? `Muitas tentativas. Tente novamente em ${LOCK_SECONDS}s.`
+          : 'Email ou senha inválidos.'
+      };
     }
+
+    await writeGuard({ failures: 0, lockedUntil: 0 });
     const userObj = {
       nome: account.nome,
       telefone: account.telefone,
@@ -90,26 +164,26 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
-   * Registra uma nova conta e realiza login automaticamente. Armazena
-   * informações básicas do usuário e marca onboarding como concluído.
+   * Registra uma nova conta e realiza login automaticamente. Guarda apenas o
+   * hash da senha e marca o onboarding como concluído.
    */
   const register = useCallback(async ({ nome, telefone, email, senha }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const existingRaw = await AsyncStorage.getItem(STORAGE_KEYS.account);
-    if (existingRaw) {
-      try {
-        if (JSON.parse(existingRaw).email === normalizedEmail) {
-          return { success: false, message: 'Este email já está cadastrado neste aparelho. Faça login.' };
-        }
-      } catch (err) {
-        // conta corrompida: permite sobrescrever
-      }
+
+    const passwordError = validatePasswordStrength(senha);
+    if (passwordError) return { success: false, message: passwordError };
+
+    const { account: existing } = await readAccount();
+    if (existing?.email === normalizedEmail) {
+      return { success: false, message: 'Este email já está cadastrado neste aparelho. Faça login.' };
     }
+
+    const record = await createPasswordRecord(senha);
     const account = {
       nome: nome.trim(),
       telefone: telefone.trim(),
       email: normalizedEmail,
-      senha,
+      ...record,
       createdAt: new Date().toISOString()
     };
     const userObj = {
@@ -117,42 +191,27 @@ export function AuthProvider({ children }) {
       telefone: account.telefone,
       email: account.email
     };
+    await setSecureItem(STORAGE_KEYS.account, JSON.stringify(account));
     await AsyncStorage.multiSet([
-      [STORAGE_KEYS.account, JSON.stringify(account)],
       [STORAGE_KEYS.user, JSON.stringify(userObj)],
       [STORAGE_KEYS.onboardingSeen, 'true']
     ]);
+    await writeGuard({ failures: 0, lockedUntil: 0 });
     setOnboardingSeen(true);
     setCurrentUser(userObj);
     return { success: true };
   }, []);
 
   /**
-   * Simula envio de link de recuperação de senha. Retorna uma mensagem
-   * amigável para o usuário.
+   * Simula envio de link de recuperação de senha. A resposta é sempre a
+   * mesma, exista a conta ou não, para não revelar quais emails estão
+   * cadastrados.
    */
-  const requestPasswordReset = useCallback(async ({ email }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const raw = await AsyncStorage.getItem(STORAGE_KEYS.account);
-    if (!raw) {
-      return {
-        success: false,
-        message: 'Nenhuma conta foi encontrada para este aplicativo.'
-      };
-    }
-    let account;
-    try {
-      account = JSON.parse(raw);
-    } catch (err) {
-      return { success: false, message: 'Os dados da conta estão corrompidos.' };
-    }
-    if (account.email !== normalizedEmail) {
-      return { success: false, message: 'Email não encontrado.' };
-    }
+  const requestPasswordReset = useCallback(async () => {
     // Neste projeto, apenas simulamos o envio de email.
     return {
       success: true,
-      message: 'Enviamos um link de recuperação simbólico. Na próxima versão haverá integração real.'
+      message: 'Se o email estiver cadastrado, você receberá um link de recuperação. A integração real virá numa próxima versão.'
     };
   }, []);
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+- senha passa a ser guardada como hash SHA-256 com salt e iterações; contas antigas em texto puro são migradas no primeiro login
+- conta guardada no Keychain/Keystore via expo-secure-store (na web, localStorage)
+- bloqueio de 60s após 5 tentativas de login falhas
+- senha com mínimo de 8 caracteres, misturando letras e números
+- recuperação de senha responde sempre igual, sem revelar quais emails estão cadastrados
+- telas de autenticação tratam erros e usam dicas de autopreenchimento
+- `npm audit fix` reduz as vulnerabilidades de dependências de 75 para 48
+- versão web: template próprio com política de segurança de conteúdo (CSP), título, descrição, foco visível e aviso sem JavaScript
+- versão web: layout limitado a 520px de largura e centralizado em telas grandes
+- adiciona ícones do app, favicon e configuração de PWA (nome, cores, idioma)
+
 ## 0.2.1
 - adiciona `app.json` e `babel.config.js` (plugin do Reanimated) para o projeto rodar em um clone limpo
 - aceita vírgula nos valores em reais e formata moeda e datas em pt-BR

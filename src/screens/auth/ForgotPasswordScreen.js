@@ -29,10 +29,15 @@ export default function ForgotPasswordScreen() {
       return;
     }
     setLoading(true);
-    const result = await requestPasswordReset({ email });
-    setLoading(false);
-    if (!result.success) setError(result.message);
-    else setMessage(result.message);
+    try {
+      const result = await requestPasswordReset({ email });
+      if (!result.success) setError(result.message);
+      else setMessage(result.message);
+    } catch (err) {
+      setError('Não foi possível concluir agora. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,6 +57,8 @@ export default function ForgotPasswordScreen() {
           placeholderTextColor="#8E897E"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
           value={email}
           onChangeText={setEmail}
         />

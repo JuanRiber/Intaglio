@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1.00001, viewport-fit=cover"
+    />
+    <!--
+      Política de segurança de conteúdo: só carrega scripts, estilos e imagens
+      da própria origem. 'unsafe-inline' em estilos é exigido pelo
+      react-native-web, que injeta estilos em tempo de execução.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://wa.me; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#0F0F10" />
+    <meta name="description" content="Nexo: organize serviços, orçamentos, clientes e faturamento do seu negócio." />
+    <meta name="robots" content="noindex" />
+    <title>Nexo</title>
+    <style>
+      html,
+      body,
+      #root {
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+      }
+      #root {
+        flex-shrink: 0;
+        flex-basis: auto;
+        flex-grow: 1;
+        display: flex;
+        flex: 1;
+      }
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+        height: calc(100% + env(safe-area-inset-top));
+      }
+      body {
+        display: flex;
+        overflow-y: auto;
+        overscroll-behavior-y: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -ms-overflow-style: scrollbar;
+        background-color: #0f0f10;
+      }
+      /* Foco visível para navegação por teclado */
+      :focus-visible {
+        outline: 2px solid #c89b3c;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>
+      <div
+        style="
+          font-family: Helvetica, sans-serif;
+          color: #fff;
+          background: #0f0f10;
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 24px;
+        "
+      >
+        <p>O Nexo precisa de JavaScript para funcionar. Ative o JavaScript no navegador e recarregue a página.</p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+  </body>
+</html>

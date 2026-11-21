@@ -28,9 +28,14 @@ export default function LoginScreen() {
       return;
     }
     setLoading(true);
-    const result = await login({ email, senha });
-    setLoading(false);
-    if (!result.success) setError(result.message);
+    try {
+      const result = await login({ email, senha });
+      if (!result.success) setError(result.message);
+    } catch (err) {
+      setError('Não foi possível entrar agora. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,6 +55,8 @@ export default function LoginScreen() {
           placeholderTextColor="#8E897E"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
           value={email}
           onChangeText={setEmail}
         />
@@ -59,6 +66,8 @@ export default function LoginScreen() {
           placeholder="Digite sua senha"
           placeholderTextColor="#8E897E"
           secureTextEntry
+          autoComplete="password"
+          textContentType="password"
           value={senha}
           onChangeText={setSenha}
         />

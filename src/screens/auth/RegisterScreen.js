@@ -12,6 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useAuth } from '../../context/AuthContext';
+import { validatePasswordStrength } from '../../utils/security';
 import { palette, radii } from '../../theme/palette';
 
 export default function RegisterScreen() {
@@ -35,8 +36,9 @@ export default function RegisterScreen() {
       setError('Informe um email válido.');
       return;
     }
-    if (senha.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres.');
+    const passwordError = validatePasswordStrength(senha);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (senha !== confirmarSenha) {
@@ -44,9 +46,14 @@ export default function RegisterScreen() {
       return;
     }
     setLoading(true);
-    const result = await register({ nome, telefone, email, senha });
-    setLoading(false);
-    if (!result.success) setError(result.message || 'Falha ao cadastrar.');
+    try {
+      const result = await register({ nome, telefone, email, senha });
+      if (!result.success) setError(result.message || 'Falha ao cadastrar.');
+    } catch (err) {
+      setError('Não foi possível criar a conta agora. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,8 +69,8 @@ export default function RegisterScreen() {
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <TextInput style={styles.input} placeholder="Seu nome" placeholderTextColor="#8E897E" value={nome} onChangeText={setNome} />
           <TextInput style={styles.input} placeholder="Seu telefone" placeholderTextColor="#8E897E" keyboardType="phone-pad" value={telefone} onChangeText={setTelefone} />
-          <TextInput style={styles.input} placeholder="Seu e-mail" placeholderTextColor="#8E897E" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-          <TextInput style={styles.input} placeholder="Senha" placeholderTextColor="#8E897E" secureTextEntry value={senha} onChangeText={setSenha} />
+          <TextInput style={styles.input} placeholder="Seu e-mail" placeholderTextColor="#8E897E" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" value={email} onChangeText={setEmail} />
+          <TextInput style={styles.input} placeholder="Senha (mín. 8, com letras e números)" placeholderTextColor="#8E897E" secureTextEntry autoComplete="new-password" textContentType="newPassword" value={senha} onChangeText={setSenha} />
           <TextInput style={styles.input} placeholder="Confirmar senha" placeholderTextColor="#8E897E" secureTextEntry value={confirmarSenha} onChangeText={setConfirmarSenha} />
           <PrimaryButton title={loading ? 'Cadastrando...' : 'Cadastrar'} onPress={handleRegister} />
           <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 14 }}>

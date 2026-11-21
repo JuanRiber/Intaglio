@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nexo",
     "slug": "nexo",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "nexo",
@@ -11,10 +11,24 @@
       "bundleIdentifier": "br.com.nexo.app"
     },
     "android": {
-      "package": "br.com.nexo.app"
+      "package": "br.com.nexo.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F10"
+      }
     },
     "web": {
-      "bundler": "webpack"
-    }
+      "bundler": "webpack",
+      "favicon": "./assets/favicon.png",
+      "name": "Nexo",
+      "shortName": "Nexo",
+      "lang": "pt-BR",
+      "description": "Organize serviços, orçamentos, clientes e faturamento do seu negócio.",
+      "themeColor": "#0F0F10",
+      "backgroundColor": "#FAF8F4",
+      "display": "standalone",
+      "orientation": "portrait"
+    },
+    "icon": "./assets/icon.png"
   }
 }

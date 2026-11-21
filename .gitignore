@@ -9,3 +9,7 @@ node_modules/
 
 # Arquivos de ambiente
 .env
+
+# Build da versão web
+web-build/
+dist/
