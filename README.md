@@ -12,6 +12,16 @@ npm run build:web  # gera a versão web estática em dist/
 
 Ao publicar o site, sirva-o por HTTPS (o hash de senha usa `crypto.subtle`, que só existe em contexto seguro) e, se possível, envie também cabeçalhos como `Strict-Transport-Security` e `X-Content-Type-Options`.
 
+## Publicar o site (PWA)
+
+O build web (`npm run build:web`) gera a pasta `dist/` com o app instalável e funcional offline (service worker em `public/sw.js`).
+
+- **Vercel:** importe o repositório; o `vercel.json` já define o build e os cabeçalhos de segurança.
+- **Netlify ou Cloudflare Pages:** build `npm run build:web`, pasta `dist`; o arquivo `public/_headers` aplica os cabeçalhos.
+- **GitHub Pages (subpasta):** gere o build com `EXPO_BASE_URL=/Nexo npm run build:web`. O GitHub Pages não permite cabeçalhos HTTP próprios, então só vale a CSP da tag `<meta>`.
+
+No iPhone, o usuário abre o link no Safari e usa Compartilhar → Adicionar à Tela de Início.
+
 ## Estrutura
 
 ```
@@ -26,6 +36,9 @@ src/utils/security.js   hash de senha, verificação e força mínima
 src/utils/secureStorage.js  cofre seguro (Keychain/Keystore) com fallback na web
 public/index.html       template da versão web (CSP, título, estilos)
 public/manifest.webmanifest  manifesto de instalação (PWA)
+public/sw.js            service worker (cache e uso offline)
+public/_headers, vercel.json  cabeçalhos de segurança por hospedagem
+app.config.js           permite publicar em subpasta via EXPO_BASE_URL
 src/theme/palette.js    cores, sombras e raios
 ```
 

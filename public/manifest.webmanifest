@@ -3,12 +3,16 @@
   "short_name": "Nexo",
   "description": "Organize serviços, orçamentos, clientes e faturamento do seu negócio.",
   "lang": "pt-BR",
-  "start_url": "/",
+  "id": ".",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FAF8F4",
   "theme_color": "#0F0F10",
   "icons": [
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

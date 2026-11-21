@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1
+- PWA completo: service worker com uso offline, ícones 192/512 e maskable, apple-touch-icon e metadados para iOS
+- caminhos do manifesto e dos ícones relativos, para funcionar na raiz ou em subpasta
+- `app.config.js` aceita `EXPO_BASE_URL` para publicar em subpasta (GitHub Pages)
+- cabeçalhos de segurança (CSP, HSTS, nosniff, X-Frame-Options e outros) em `public/_headers` e `vercel.json`
+- README com instruções de publicação
+
 ## 0.4.0
 - atualiza o Expo SDK 49 para o 58 (com React 19 e React Native 0.88)
 - atualiza o React Navigation 6 para o 7
