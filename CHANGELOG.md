@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+- o app passa a se chamar Intaglio: telas, título, manifesto, service worker, `app.json` (nome, slug, scheme e identificadores de pacote) e `package.json`
+- novos ícones, com um "I" dourado no lugar do "N"
+- corrige o título da aba do navegador, que aparecia como "undefined"
+- as chaves de armazenamento continuam com o prefixo `nexo_` para não apagar os dados de quem já usa o app
+- o repositório e a subpasta do GitHub Pages continuam como `Nexo`
+
 ## 0.5.0
 - adiciona "Excluir minha conta" na tela Mais: pede a senha e apaga conta, perfil, serviços, login e controle de tentativas do aparelho
 - corrige os avisos e confirmações na web, onde `Alert.alert` não faz nada (excluir serviço e avisos do WhatsApp não funcionavam no PWA)

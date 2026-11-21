@@ -31,7 +31,7 @@ export default function OnboardingScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.top}>
-        <Text style={styles.brand}>Nexo</Text>
+        <Text style={styles.brand}>Intaglio</Text>
         {!isLast && (
           <TouchableOpacity onPress={completeOnboarding}>
             <Text style={styles.skip}>Pular</Text>

@@ -17,7 +17,7 @@ export default function SplashScreen() {
     <View style={styles.container}>
       <View style={styles.glow} />
       <Animated.Text style={[styles.wordmark, { opacity, transform: [{ translateY: rise }] }]}>
-        Nexo
+        Intaglio
       </Animated.Text>
       <Animated.Text style={[styles.subtitle, { opacity }]}>
         simples · poderoso · feito para quem faz

@@ -22,6 +22,11 @@ const navTheme = {
   }
 };
 
+// Título da aba do navegador: nome do app, com a tela atual quando houver
+function formatDocumentTitle(options) {
+  return options?.title ? `${options.title} · Intaglio` : 'Intaglio';
+}
+
 // Na web, limita a largura para o app não esticar em telas grandes
 function WebFrame({ children }) {
   if (Platform.OS !== 'web') return children;
@@ -40,7 +45,7 @@ export default function App() {
         <AuthProvider>
           <ProfileProvider>
             <ServicesProvider>
-              <NavigationContainer theme={navTheme}>
+              <NavigationContainer theme={navTheme} documentTitle={{ formatter: formatDocumentTitle }}>
                 <RootNavigator />
               </NavigationContainer>
             </ServicesProvider>

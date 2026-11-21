@@ -45,7 +45,7 @@ export default function CompleteProfileScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
         <View style={styles.hero}>
-          <Text style={styles.brand}>Nexo</Text>
+          <Text style={styles.brand}>Intaglio</Text>
           <Text style={styles.heroTitle}>Completar perfil profissional</Text>
           <Text style={styles.heroText}>Finalize seu perfil para deixar o app com a sua cara.</Text>
         </View>

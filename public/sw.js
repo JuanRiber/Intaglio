@@ -1,5 +1,5 @@
-/* Service worker do Nexo: permite abrir o app offline depois da primeira visita. */
-const CACHE = 'nexo-v1';
+/* Service worker do Intaglio: permite abrir o app offline depois da primeira visita. */
+const CACHE = 'intaglio-v1';
 
 self.addEventListener('install', (event) => {
   // Pré-carrega a página inicial; os demais arquivos entram no cache conforme são usados

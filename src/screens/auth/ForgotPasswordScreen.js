@@ -43,7 +43,7 @@ export default function ForgotPasswordScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.hero}>
-        <Text style={styles.brand}>Nexo</Text>
+        <Text style={styles.brand}>Intaglio</Text>
         <Text style={styles.heroTitle}>Recupere sua senha</Text>
         <Text style={styles.heroText}>Informe seu e-mail cadastrado para receber o link.</Text>
       </View>

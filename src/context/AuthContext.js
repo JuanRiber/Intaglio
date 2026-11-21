@@ -13,8 +13,8 @@ import { createPasswordRecord, verifyPassword, validatePasswordStrength } from '
  * ATENÇÃO: como tudo é local, isto não substitui autenticação no servidor.
  * Um backend de autenticação continua necessário antes de qualquer lançamento.
  *
- * As chaves de armazenamento têm nomes históricos e foram mantidas para não
- * perder os dados de quem já usa o app:
+ * As chaves de armazenamento têm nomes históricos (do tempo em que o app se
+ * chamava Nexo) e foram mantidas para não perder os dados de quem já usa o app:
  *   nexo_apollo_onboarding -> onboarding já visto
  *   nexo_gaia_user         -> usuário logado
  *   nexo_cernunnos_account -> conta cadastrada

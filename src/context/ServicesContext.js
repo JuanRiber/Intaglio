@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getServiceTotals, isSameMonth } from '../utils/format';
 
 /**
- * ServicesContext gerencia a lista de serviços cadastrados no Nexo. Cada
+ * ServicesContext gerencia a lista de serviços cadastrados no Intaglio. Cada
  * serviço possui informações sobre o cliente, equipamento, problema,
  * peças utilizadas, mão de obra e status. As ações disponíveis incluem
  * adicionar, editar, excluir e alterar status, incluindo marcar como

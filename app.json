@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "Nexo",
-    "slug": "nexo",
-    "version": "0.5.0",
+    "name": "Intaglio",
+    "slug": "intaglio",
+    "version": "0.6.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "scheme": "nexo",
+    "scheme": "intaglio",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "br.com.nexo.app"
+      "bundleIdentifier": "br.com.intaglio.app"
     },
     "android": {
-      "package": "br.com.nexo.app",
+      "package": "br.com.intaglio.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F0F10"

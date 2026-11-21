@@ -60,7 +60,7 @@ export default function RegisterScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
         <View style={styles.hero}>
-          <Text style={styles.brand}>Nexo</Text>
+          <Text style={styles.brand}>Intaglio</Text>
           <Text style={styles.heroTitle}>Crie sua conta</Text>
           <Text style={styles.heroText}>Cadastro simples para começar a usar o app.</Text>
         </View>

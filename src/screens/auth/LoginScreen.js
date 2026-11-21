@@ -41,7 +41,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.hero}>
-        <Text style={styles.brand}>Nexo</Text>
+        <Text style={styles.brand}>Intaglio</Text>
         <Text style={styles.heroTitle}>Acesse sua conta</Text>
         <Text style={styles.heroText}>Entre para continuar gerenciando seus serviços.</Text>
       </View>
