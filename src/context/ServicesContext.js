@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS, legacyMigration } from '../utils/storageKeys';
 import { getServiceTotals, isSameMonth } from '../utils/format';
 
 /**
@@ -10,7 +11,7 @@ import { getServiceTotals, isSameMonth } from '../utils/format';
  * pago. Todos os dados são persistidos em AsyncStorage.
  */
 
-const SERVICES_KEY = 'nexo_athena_services';
+const SERVICES_KEY = STORAGE_KEYS.services;
 
 // Definição de status com rótulo e cor.
 export const SERVICE_STATUSES = {
@@ -105,6 +106,7 @@ export function ServicesProvider({ children }) {
   useEffect(() => {
     async function loadServices() {
       try {
+        await legacyMigration;
         const raw = await AsyncStorage.getItem(SERVICES_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);

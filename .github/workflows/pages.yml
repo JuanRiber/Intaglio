@@ -27,7 +27,7 @@ jobs:
       - name: Build da versão web
         run: npm run build:web
         env:
-          EXPO_BASE_URL: /Nexo
+          EXPO_BASE_URL: /Intaglio
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

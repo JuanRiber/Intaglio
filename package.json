@@ -1,6 +1,6 @@
 {
   "name": "intaglio",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "description": "Aplicativo Intaglio – organização de serviços e orçamentos para profissionais autônomos.",
   "main": "node_modules/expo/AppEntry.js",

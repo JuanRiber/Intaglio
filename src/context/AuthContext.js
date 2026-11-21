@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSecureItem, setSecureItem, removeSecureItem } from '../utils/secureStorage';
+import { STORAGE_KEYS, legacyMigration } from '../utils/storageKeys';
 import { createPasswordRecord, verifyPassword, validatePasswordStrength } from '../utils/security';
 
 /**
@@ -12,21 +13,8 @@ import { createPasswordRecord, verifyPassword, validatePasswordStrength } from '
  *
  * ATENÇÃO: como tudo é local, isto não substitui autenticação no servidor.
  * Um backend de autenticação continua necessário antes de qualquer lançamento.
- *
- * As chaves de armazenamento têm nomes históricos (do tempo em que o app se
- * chamava Nexo) e foram mantidas para não perder os dados de quem já usa o app:
- *   nexo_apollo_onboarding -> onboarding já visto
- *   nexo_gaia_user         -> usuário logado
- *   nexo_cernunnos_account -> conta cadastrada
  */
 
-const STORAGE_KEYS = {
-  onboardingSeen: 'nexo_apollo_onboarding',
-  user: 'nexo_gaia_user',
-  account: 'nexo_cernunnos_account'
-};
-
-const GUARD_KEY = 'nexo_login_guard';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_SECONDS = 60;
 
@@ -46,7 +34,7 @@ async function readAccount() {
 // Controle de tentativas de login falhas, para frear tentativa e erro
 async function readGuard() {
   try {
-    const raw = await AsyncStorage.getItem(GUARD_KEY);
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.loginGuard);
     const parsed = raw ? JSON.parse(raw) : null;
     return { failures: Number(parsed?.failures) || 0, lockedUntil: Number(parsed?.lockedUntil) || 0 };
   } catch (err) {
@@ -56,7 +44,7 @@ async function readGuard() {
 
 async function writeGuard(guard) {
   try {
-    await AsyncStorage.setItem(GUARD_KEY, JSON.stringify(guard));
+    await AsyncStorage.setItem(STORAGE_KEYS.loginGuard, JSON.stringify(guard));
   } catch (err) {
     console.warn('Falha ao salvar controle de tentativas', err);
   }
@@ -71,6 +59,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function restoreSession() {
       try {
+        await legacyMigration;
         const [storedOnboarding, storedUser] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.onboardingSeen),
           AsyncStorage.getItem(STORAGE_KEYS.user)
@@ -229,7 +218,7 @@ export function AuthProvider({ children }) {
    */
   const deleteAccount = useCallback(async () => {
     await removeSecureItem(STORAGE_KEYS.account);
-    await AsyncStorage.multiRemove([STORAGE_KEYS.user, STORAGE_KEYS.onboardingSeen, GUARD_KEY]);
+    await AsyncStorage.multiRemove([STORAGE_KEYS.user, STORAGE_KEYS.onboardingSeen, STORAGE_KEYS.loginGuard]);
     setOnboardingSeen(false);
     setCurrentUser(null);
   }, []);

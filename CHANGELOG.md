@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1
+- conclui a renomeação para Intaglio: o repositório do GitHub passa a se chamar Intaglio e o site, `juanriber.github.io/Intaglio`
+- as chaves de armazenamento passam de `nexo_*` para `intaglio_*`, com migração automática na primeira abertura, sem perder conta, perfil nem serviços
+- `EXPO_BASE_URL` e o workflow de publicação usam `/Intaglio`
+
 ## 0.6.0
 - o app passa a se chamar Intaglio: telas, título, manifesto, service worker, `app.json` (nome, slug, scheme e identificadores de pacote) e `package.json`
 - novos ícones, com um "I" dourado no lugar do "N"

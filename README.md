@@ -18,7 +18,7 @@ O build web (`npm run build:web`) gera a pasta `dist/` com o app instalável e f
 
 - **Vercel:** importe o repositório; o `vercel.json` já define o build e os cabeçalhos de segurança.
 - **Netlify ou Cloudflare Pages:** build `npm run build:web`, pasta `dist`; o arquivo `public/_headers` aplica os cabeçalhos.
-- **GitHub Pages (subpasta):** a subpasta é o nome do repositório, hoje `Nexo`. Gere o build com `EXPO_BASE_URL=/Nexo npm run build:web`. O GitHub Pages não permite cabeçalhos HTTP próprios, então só vale a CSP da tag `<meta>`.
+- **GitHub Pages (subpasta):** a subpasta é o nome do repositório. Gere o build com `EXPO_BASE_URL=/Intaglio npm run build:web`; o site fica em `https://juanriber.github.io/Intaglio/`. O GitHub Pages não permite cabeçalhos HTTP próprios, então só vale a CSP da tag `<meta>`.
 
 No iPhone, o usuário abre o link no Safari e usa Compartilhar → Adicionar à Tela de Início.
 

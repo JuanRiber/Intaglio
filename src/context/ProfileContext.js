@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS, legacyMigration } from '../utils/storageKeys';
 
 /**
  * ProfileContext gerencia as informações profissionais do usuário. Após o
@@ -8,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * Os dados são armazenados localmente em AsyncStorage.
  */
 
-const PROFILE_KEY = 'nexo_athena_profile';
+const PROFILE_KEY = STORAGE_KEYS.profile;
 
 const ProfileContext = createContext(null);
 
@@ -19,6 +20,7 @@ export function ProfileProvider({ children }) {
   useEffect(() => {
     async function load() {
       try {
+        await legacyMigration;
         const raw = await AsyncStorage.getItem(PROFILE_KEY);
         const parsed = raw ? JSON.parse(raw) : null;
         setProfile(parsed && typeof parsed === 'object' ? parsed : null);
