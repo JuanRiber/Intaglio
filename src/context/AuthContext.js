@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getSecureItem, setSecureItem } from '../utils/secureStorage';
+import { getSecureItem, setSecureItem, removeSecureItem } from '../utils/secureStorage';
 import { createPasswordRecord, verifyPassword, validatePasswordStrength } from '../utils/security';
 
 /**
@@ -215,6 +215,25 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  /** Confere a senha da conta atual, usada antes de ações sensíveis. */
+  const verifyCurrentPassword = useCallback(async (senha) => {
+    const { account } = await readAccount();
+    if (!account) return false;
+    if (account.passwordHash) return verifyPassword(senha, account);
+    return typeof account.senha === 'string' && account.senha === senha;
+  }, []);
+
+  /**
+   * Apaga a conta, o login e o controle de tentativas deste aparelho. O perfil
+   * e os serviços são apagados pelos seus próprios contextos antes desta chamada.
+   */
+  const deleteAccount = useCallback(async () => {
+    await removeSecureItem(STORAGE_KEYS.account);
+    await AsyncStorage.multiRemove([STORAGE_KEYS.user, STORAGE_KEYS.onboardingSeen, GUARD_KEY]);
+    setOnboardingSeen(false);
+    setCurrentUser(null);
+  }, []);
+
   const logout = useCallback(async () => {
     await AsyncStorage.removeItem(STORAGE_KEYS.user);
     setCurrentUser(null);
@@ -230,9 +249,22 @@ export function AuthProvider({ children }) {
       login,
       register,
       requestPasswordReset,
+      verifyCurrentPassword,
+      deleteAccount,
       logout
     }),
-    [isBooting, onboardingSeen, currentUser, completeOnboarding, login, register, requestPasswordReset, logout]
+    [
+      isBooting,
+      onboardingSeen,
+      currentUser,
+      completeOnboarding,
+      login,
+      register,
+      requestPasswordReset,
+      verifyCurrentPassword,
+      deleteAccount,
+      logout
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

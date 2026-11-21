@@ -50,6 +50,15 @@ export function ProfileProvider({ children }) {
     }
   }, []);
 
+  const clearProfile = useCallback(async () => {
+    setProfile(null);
+    try {
+      await AsyncStorage.removeItem(PROFILE_KEY);
+    } catch (err) {
+      console.warn('Erro ao apagar perfil profissional', err);
+    }
+  }, []);
+
   const isProfileComplete = useMemo(() => {
     if (!profile) return false;
     return Boolean(profile.name && profile.businessName && profile.specialty && profile.whatsapp && profile.city);
@@ -60,9 +69,10 @@ export function ProfileProvider({ children }) {
       isLoading,
       profile,
       isProfileComplete,
-      saveProfile
+      saveProfile,
+      clearProfile
     }),
-    [isLoading, profile, isProfileComplete, saveProfile]
+    [isLoading, profile, isProfileComplete, saveProfile, clearProfile]
   );
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;

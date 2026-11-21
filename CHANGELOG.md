@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+- adiciona "Excluir minha conta" na tela Mais: pede a senha e apaga conta, perfil, serviços, login e controle de tentativas do aparelho
+- corrige os avisos e confirmações na web, onde `Alert.alert` não faz nada (excluir serviço e avisos do WhatsApp não funcionavam no PWA)
+- lista de serviços vazia não deixa mais uma chave `[]` no armazenamento
+
 ## 0.4.1
 - PWA completo: service worker com uso offline, ícones 192/512 e maskable, apple-touch-icon e metadados para iOS
 - caminhos do manifesto e dos ícones relativos, para funcionar na raiz ou em subpasta

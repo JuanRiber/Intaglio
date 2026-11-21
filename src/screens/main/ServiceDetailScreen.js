@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useServices, SERVICE_STATUSES, SERVICE_STATUS_ORDER, getStatusInfo } from '../../context/ServicesContext';
 import SectionCard from '../../components/SectionCard';
 import PrimaryButton from '../../components/PrimaryButton';
 import { palette, radii } from '../../theme/palette';
+import { confirmAction, notify } from '../../utils/dialog';
 import { formatCurrency, getServiceTotals, toWhatsAppNumber } from '../../utils/format';
 
 export default function ServiceDetailScreen() {
@@ -29,24 +30,22 @@ export default function ServiceDetailScreen() {
 
   const { partsTotal, labourCost, total } = getServiceTotals(service);
 
-  const handleDelete = () => {
-    Alert.alert('Excluir serviço', 'Tem certeza que deseja excluir este serviço?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => {
-          deleteService(service.id);
-          navigation.goBack();
-        }
-      }
-    ]);
+  const handleDelete = async () => {
+    const confirmed = await confirmAction({
+      title: 'Excluir serviço',
+      message: 'Tem certeza que deseja excluir este serviço?',
+      confirmText: 'Excluir',
+      destructive: true
+    });
+    if (!confirmed) return;
+    deleteService(service.id);
+    navigation.goBack();
   };
 
   const handleShareWhatsApp = async () => {
     const number = toWhatsAppNumber(service.phone);
     if (!number) {
-      Alert.alert('Telefone inválido', 'Edite o serviço e informe um telefone com DDD para enviar o orçamento.');
+      notify('Telefone inválido', 'Edite o serviço e informe um telefone com DDD para enviar o orçamento.');
       return;
     }
     const message =
@@ -60,7 +59,7 @@ export default function ServiceDetailScreen() {
     try {
       await Linking.openURL(url);
     } catch (err) {
-      Alert.alert('Não foi possível abrir o WhatsApp', 'Verifique se o aplicativo está instalado.');
+      notify('Não foi possível abrir o WhatsApp', 'Verifique se o aplicativo está instalado.');
     }
   };
 

@@ -124,7 +124,11 @@ export function ServicesProvider({ children }) {
   // Persiste serviços sempre que a lista mudar após o carregamento inicial
   useEffect(() => {
     if (!isLoadedRef.current) return;
-    AsyncStorage.setItem(SERVICES_KEY, JSON.stringify(services)).catch((err) => {
+    // Lista vazia não deixa rastro no armazenamento
+    const save = services.length
+      ? AsyncStorage.setItem(SERVICES_KEY, JSON.stringify(services))
+      : AsyncStorage.removeItem(SERVICES_KEY);
+    save.catch((err) => {
       console.warn('Erro ao salvar serviços', err);
     });
   }, [services]);
@@ -164,6 +168,15 @@ export function ServicesProvider({ children }) {
 
   const updateStatus = useCallback((id, status) => {
     dispatch({ type: 'UPDATE_STATUS', payload: { id, status } });
+  }, []);
+
+  const clearServices = useCallback(async () => {
+    dispatch({ type: 'SET_SERVICES', payload: [] });
+    try {
+      await AsyncStorage.removeItem(SERVICES_KEY);
+    } catch (err) {
+      console.warn('Erro ao apagar serviços', err);
+    }
   }, []);
 
   // Receita do mês, contagem por status e serviços ainda em andamento
@@ -212,9 +225,10 @@ export function ServicesProvider({ children }) {
       editService,
       deleteService,
       updateStatus,
+      clearServices,
       summary
     }),
-    [services, addService, editService, deleteService, updateStatus, summary]
+    [services, addService, editService, deleteService, updateStatus, clearServices, summary]
   );
 
   return <ServicesContext.Provider value={value}>{children}</ServicesContext.Provider>;
